@@ -1,21 +1,29 @@
 <div align="center">
 
-<img src="docs/img/logo-mydesk.png" alt="MyDesk — Smart Notes Workspace" width="360" />
+<img src="docs/img/logo-mydesk.png" alt="MyDesk-Colab" width="360" />
 
-# MyDesk — Smart Notes Workspace
+# MyDesk-Colab
 
-**Organize ideas, manage clients, and collaborate in real time — all in one place.**
+**Cópia isolada para colaboração e desenvolvimento do MyDesk.**
 
-[![Deploy](https://img.shields.io/badge/Deploy-GitHub%20Pages-222?style=flat-square&logo=github)](https://jvalvim-bit.github.io/MyDesk/)
+[![Repository](https://img.shields.io/badge/Repository-private-24292f?style=flat-square&logo=github)](https://github.com/jvalvim-bit/mydesk-collab)
+[![Collaboration branch](https://img.shields.io/badge/branch-mateus--dev-0a7bff?style=flat-square&logo=git)](https://github.com/jvalvim-bit/mydesk-collab/tree/mateus-dev)
 [![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com)
-[![Vercel](https://img.shields.io/badge/API-Vercel-000?style=flat-square&logo=vercel)](https://vercel.com)
-[![License](https://img.shields.io/badge/License-MIT-10b981?style=flat-square)](LICENSE)
 
-[**Visit the site →**](https://jvalvim-bit.github.io/MyDesk/) &nbsp;·&nbsp; [Report a bug](https://github.com/jvalvim-bit/MyDesk/issues) &nbsp;·&nbsp; [Request a feature](https://github.com/jvalvim-bit/MyDesk/issues)
+[**Abrir repositório →**](https://github.com/jvalvim-bit/mydesk-collab) &nbsp;·&nbsp; [Trabalhar na `mateus-dev`](https://github.com/jvalvim-bit/mydesk-collab/tree/mateus-dev)
 
 </div>
 
 ---
+
+> [!IMPORTANT]
+> Esta cópia não é o ambiente de produção. Use somente projetos, domínios e
+> credenciais de desenvolvimento próprios. A configuração conhecida do MyDesk
+> de produção é bloqueada pelo código. Não publique, não aponte serviços e não
+> copie credenciais do projeto original para este repositório.
+>
+> A `main` é a referência estável. O trabalho de colaboração deve acontecer na
+> `mateus-dev`, com Pull Request para `main` quando estiver revisado.
 
 ## Overview
 
@@ -45,7 +53,9 @@ The CRM and public form builder include optional smart fields that require no AP
 - **BrasilAPI** for public company lookup by CNPJ
 - **IBGE Localidades** for the official state and municipality lists
 
-Requests go through the MyDesk Vercel API, are validated and normalized before reaching the browser, and use CDN plus local caching. See [docs/INTEGRACOES_BRASIL.md](docs/INTEGRACOES_BRASIL.md).
+Requests use the `/api/form` endpoint configured for the environment local or
+de desenvolvimento, are validated and normalized before reaching the browser,
+and use CDN plus local caching. See [docs/INTEGRACOES_BRASIL.md](docs/INTEGRACOES_BRASIL.md).
 
 ---
 
@@ -416,62 +426,56 @@ Accessible only to accounts with the `admin: true` custom claim in Firebase:
 - **Web Audio API** — status sounds and notifications
 
 ### Backend & APIs
-- **Vercel Serverless Functions (Node.js)** — payment API and webhook
+- **Vercel Serverless Functions (Node.js)** — APIs opcionais, configuradas apenas em ambiente isolado
 - **Firebase Admin SDK** — custom claims and privileged operations
-- **Stripe API** — Checkout, recurring Billing, webhooks and Customer Portal
+- **Stripe API** — Checkout, recurring Billing, webhooks and Customer Portal (desativados por padrão)
 
-### Infrastructure
-- **GitHub Pages** — static hosting (serves only `docs/`)
-- **Vercel** — serverless functions (`/api/*`)
-- **Firebase Realtime Database** — real-time sync
-- **Firebase Authentication** — secure auth
+### Ambiente de colaboração
+- **Firebase Realtime Database + Authentication** — somente projeto de desenvolvimento ou Emulator
+- **Vercel / Cloudflare Worker** — opcionais e isolados; cron e e-mail ficam desligados por padrão
+- **GitHub** — repositório privado; `mateus-dev` é a branch de trabalho compartilhada
 
 ---
 
 ## Project Structure
 
 ```
-mydesk/
-├── docs/                   # Only directory published by GitHub Pages
-│   ├── index.html          # Main app (board + toolbar)
-│   ├── login.html          # Landing page + authentication
-│   ├── css/
-│   │   └── main.css        # All styles (design tokens, components)
+mydesk-collab/
+├── docs/
 │   ├── js/
-│   │   ├── firebase-init.js  # Firebase initialization
-│   │   ├── auth-service.js   # Centralized auth state (window.authState)
-│   │   ├── app.js             # All app logic
-│   │   ├── login.js           # Login, registration, and typewriter logic
-│   │   └── vendor/pdfjs/      # Self-hosted PDF.js (CSP-compliant)
-│   └── screenshots/        # Images used in this README
-│
-├── api/
-│   ├── create-charge.js          # POST /api/create-charge → Stripe Checkout
-│   ├── create-portal-session.js  # POST → Stripe Customer Portal
-│   └── webhook.js                # Stripe webhooks → Firebase
+│   │   ├── firebase-init.js                    # Inicialização segura do Firebase
+│   │   ├── firebase-config.local.example.js    # Template local, sem segredo
+│   │   └── firebase-config.local.js            # Ignorado pelo Git; criar localmente
+│   └── ...
+├── api/                                        # Funções opcionais de backend
 ├── lib/
-│   ├── firebase-admin.js         # Shared Firebase Admin/REST helpers
-│   └── stripe-billing.js         # Stripe client, catalog and entitlements
-│
-├── scripts/
-│   ├── set-admin.js        # node scripts/set-admin.js email@x.com
-│   └── remove-admin.js     # node scripts/remove-admin.js email@x.com
-│
-├── database.rules.json     # Firebase Realtime DB security rules (not public)
-├── firebase.json           # Firebase CLI config (not public)
-├── vercel.json              # Vercel config — outputDirectory points to docs/
-└── .gitignore               # Ignores .env, serviceAccountKey.json, node_modules
+│   ├── collab-safety.js                        # Bloqueios do ambiente de produção conhecido
+│   ├── firebase-admin.js
+│   └── stripe-billing.js
+├── worker/
+│   ├── .dev.vars.example                       # Template local do Worker
+│   ├── README.md                               # Regras do Worker isolado
+│   └── wrangler.toml                           # Sem cron ativo
+├── scripts/                                    # Ferramentas administrativas; usar só em dev
+├── database.rules.json
+├── vercel.json                                 # Sem cron configurado
+└── .gitignore                                  # Protege .env, chaves e configurações locais
 ```
 
-> Only the contents of `docs/` are publicly served by GitHub Pages — the Firebase/Vercel
-> config files at the repository root are never exposed on the live site.
+> Arquivos locais de configuração e credenciais não devem entrar no Git. A
+> proteção em `lib/collab-safety.js` bloqueia os identificadores conhecidos de
+> produção, mas não substitui a revisão cuidadosa das variáveis de ambiente.
 
 ---
 
 ## Firebase Structure
 
+Use um projeto Firebase de desenvolvimento próprio ou o Emulator. O nome abaixo
+é intencionalmente genérico; a configuração de produção do MyDesk é recusada
+por esta cópia.
+
 ```
-mydesk-ad0da/ (Realtime Database)
+your-development-project/ (Realtime Database)
 ├── users/
 │   └── {uid}/
 │       ├── profile         → { username, name, email, role, photo }
@@ -529,79 +533,89 @@ mydesk-ad0da/ (Realtime Database)
 
 ---
 
-## Local Setup
+## Local Setup (seguro)
 
-### Prerequisites
+### Pré-requisitos
 
-- Node.js 18+
-- A [Firebase](https://firebase.google.com) account
-- A [Stripe](https://stripe.com) account with Billing enabled *(optional, only for payments)*
-- [Vercel CLI](https://vercel.com/cli) *(optional, for local serverless functions)*
+- Node.js **24.x** (conforme `package.json`)
+- Um projeto [Firebase](https://firebase.google.com) de desenvolvimento, ou o Firebase Emulator
+- Credenciais próprias de teste, caso você precise testar recursos opcionais
 
-### 1. Clone the repository
+Não use contas, URLs, chaves, remetentes, projetos Firebase, Vercel ou Workers
+do MyDesk original.
 
-```bash
-git clone https://github.com/jvalvim-bit/MyDesk.git
-cd MyDesk
-```
-
-### 2. Configure Firebase
-
-Edit `docs/js/firebase-init.js` with your Firebase project credentials:
-
-```javascript
-const firebaseConfig = {
-  apiKey:            "your-api-key",
-  authDomain:        "your-project.firebaseapp.com",
-  databaseURL:       "https://your-project-default-rtdb.firebaseio.com",
-  projectId:         "your-project",
-  storageBucket:     "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId:             "1:xxx:web:xxx"
-};
-```
-
-### 3. Configure environment variables
-
-Create a `.env` file at the repository root (never commit it):
-
-```env
-STRIPE_SECRET_KEY=rk_live_restricted-key
-STRIPE_WEBHOOK_SECRET=whsec_live-endpoint-secret
-STRIPE_PRICE_MONTHLY=price_live-monthly
-STRIPE_PRICE_ANNUAL=price_live-annual
-APP_URL=https://mydesk.social
-FIREBASE_PROJECT_ID=your-project
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@your-project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_DATABASE_URL=https://your-project-default-rtdb.firebaseio.com
-```
-
-### 4. Deploy Firebase rules
+### 1. Clone e selecione a branch de colaboração
 
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase use your-project
-firebase deploy --only database
+git clone https://github.com/jvalvim-bit/mydesk-collab.git
+cd mydesk-collab
+git switch mateus-dev
+git pull --ff-only origin mateus-dev
+npm install
+npm test
 ```
 
-### 5. Run locally
+### 2. Configure o frontend Firebase local
 
-The frontend is static — just serve the `docs/` folder:
+Não edite `docs/js/firebase-init.js`. Copie o template ignorado pelo Git e
+preencha somente os dados públicos de um projeto Firebase de desenvolvimento:
+
+```bash
+Copy-Item docs/js/firebase-config.local.example.js docs/js/firebase-config.local.js
+```
+
+No macOS/Linux, use:
+
+```bash
+cp docs/js/firebase-config.local.example.js docs/js/firebase-config.local.js
+```
+
+Depois, edite `docs/js/firebase-config.local.js`. Esse arquivo é local e não
+deve ser commitado. Sem essa configuração, o frontend falha de forma segura em
+vez de se conectar ao ambiente original.
+
+### 3. Execute o frontend
 
 ```bash
 npx serve docs
-# or
+# ou
 python -m http.server 8000 --directory docs
 ```
 
-To test the serverless functions locally:
+### 4. Backend e recursos opcionais
 
-```bash
-npm install -g vercel
-vercel dev
+As funções de backend só devem receber variáveis em um ambiente de
+desenvolvimento isolado. Arquivos `.env` são ignorados pelo Git. Um conjunto
+seguro de flags iniciais é:
+
+```env
+FIREBASE_PROJECT_ID=your-development-project
+FIREBASE_CLIENT_EMAIL=your-development-service-account
+FIREBASE_PRIVATE_KEY=your-development-private-key
+FIREBASE_DATABASE_URL=https://your-development-project-default-rtdb.firebaseio.com
+APP_URL=http://localhost:3000
+
+MYDESK_ENABLE_BILLING=0
+MYDESK_ENABLE_EMAIL=0
+MYDESK_ENABLE_AI=0
+MYDESK_COLLAB_MODE=1
+MYDESK_ENABLE_SCHEDULED_JOBS=0
 ```
+
+Billing, e-mail, IA e tarefas agendadas começam desligados. Se um teste exigir
+um deles, habilite-o explicitamente e use apenas chaves de teste próprias. O
+código recusa chaves Stripe live e as configurações conhecidas de produção.
+
+Para testar funções Vercel, use `vercel dev` somente depois de confirmar que o
+projeto Vercel vinculado também é isolado. Não execute deploys Firebase, Vercel
+ou Cloudflare a partir desta cópia sem revisar o destino e obter autorização.
+
+### 5. Worker de lembretes
+
+O Worker não possui cron ativo e mantém e-mail desativado. Leia
+[`worker/README.md`](worker/README.md) e copie `worker/.dev.vars.example` para
+`worker/.dev.vars` somente se for testar um Worker isolado. Nunca execute
+`wrangler deploy` contra o Worker ou a conta de produção.
 
 ---
 
@@ -621,7 +635,9 @@ node scripts/set-admin.js --uid USER_UID
 node scripts/remove-admin.js email@example.com
 ```
 
-> Requires `serviceAccountKey.json` at the repository root and a configured `.env`.
+> Use esses scripts somente com um projeto Firebase de desenvolvimento e uma
+> credencial própria configurada localmente. Nunca use nem copie um
+> `serviceAccountKey.json` ou `.env` do ambiente original.
 
 ---
 
@@ -641,16 +657,17 @@ The project implements the following protections:
 | **Upload** | MIME type + extension validation (blocks .exe, .bat, .sh) |
 | **Password hashing (demo mode)** | PBKDF2 with a random per-account salt (100k iterations) |
 | **Rate limiting** | 30 notes/month limit on the Free plan (Firebase Rules) |
+| **Isolamento desta cópia** | `lib/collab-safety.js` bloqueia os identificadores conhecidos de produção; billing, e-mail, IA e jobs exigem ativação explícita |
 
 ---
 
 ## Contributing
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m 'feat: add my feature'`
-4. Push: `git push origin feature/my-feature`
-5. Open a Pull Request
+1. Trabalhe na branch `mateus-dev`, nunca faça commit direto na `main`.
+2. Antes de começar, atualize a branch: `git pull --ff-only origin mateus-dev`.
+3. Faça uma alteração focada e rode `npm test` quando aplicável.
+4. Commit e envie: `git add <arquivos> && git commit -m "descrição" && git push origin mateus-dev`.
+5. Quando a alteração estiver pronta para integrar, abra um Pull Request de `mateus-dev` para `main`.
 
 ---
 
