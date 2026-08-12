@@ -1,0 +1,428 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ═══════════════════════════════════════════════════════════════
+     Content-Security-Policy
+     script-src NÃO tem 'unsafe-inline': por isso todo handler on*= saiu do
+     HTML (js/handlers-*.js) e o HTML gerado em runtime usa data-act. Assim,
+     mesmo que um XSS armazenado consiga injetar markup, o navegador recusa
+     executar script inline — que é o formato de praticamente todo payload.
+     Origens liberadas, uma a uma: Firebase (SDK, banco e iframe do login
+     Google), fontes do Google, funções da Vercel, rádio Lo-Fi (SomaFM),
+     ipapi (fuso), Microsoft Graph (Outlook) e os provedores de métricas.
+     ═══════════════════════════════════════════════════════════════ -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' https://www.gstatic.com https://apis.google.com https://*.firebaseio.com https://cloud.umami.is https://plausible.io https://www.googletagmanager.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data: blob: https:;
+  media-src 'self' data: blob: https://ice6.somafm.com https://somafm.com;
+  worker-src 'self' blob:;
+  connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://mydesk-eta.vercel.app https://ipapi.co https://ice6.somafm.com https://somafm.com https://graph.microsoft.com https://login.microsoftonline.com https://cloud.umami.is https://plausible.io https://www.google-analytics.com;
+  frame-src 'self' https://mydesk-ad0da.firebaseapp.com https://accounts.google.com https://login.microsoftonline.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
+<title data-i18n="auth.title">MyDesk — Entrar</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#040409">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/i18n.css?v=1">
+<script src="js/frame-guard.js?v=1"></script>
+<script src="js/analytics.js?v=2"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.local.js"></script>
+<script src="js/firebase-init.js?v=8"></script>
+<style>
+:root{
+  /* geometria da aurora: a faixa cruza o centro da tela nesta altura */
+  --band: 88vh;
+  --ring: calc(var(--band) / .375);   /* tamanho do círculo que gera a faixa */
+  --cy:   calc(62vh + var(--band));   /* centro do círculo, abaixo da viewport */
+  --glass: rgba(24,24,29,.52);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#040409;
+  font-family:"Inter",system-ui,-apple-system,sans-serif;
+  color:#fff;display:grid;place-items:center;
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+  opacity:0;transition:opacity .4s ease;
+}
+body.page-ready{opacity:1;}
+@media(prefers-reduced-motion:reduce){body{transition:none;opacity:1;}}
+
+/* ══════════════ CENA ══════════════ */
+.scene{position:fixed;inset:0;overflow:hidden;z-index:0;background:
+  radial-gradient(120% 80% at 50% 108%, #0d1030 0%, #06060f 52%, #040409 100%)}
+
+.circle{
+  position:absolute;left:50%;top:var(--cy);
+  width:var(--ring);height:var(--ring);
+  transform:translate(-50%,-50%);
+  transform-origin:50% 50%;
+  will-change:transform;
+}
+
+/* faixa de cor: gradiente cônico girando dentro de uma máscara de anel */
+.aurora{
+  background:conic-gradient(from 168deg,
+    #0a1856  0deg,  #2c3ea8  60deg, #4f46e5 110deg,
+    #6366f1 150deg, #8b5cf6 200deg,
+    #14b8a6 270deg, #0d3a5f 320deg, #0a1856 360deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 0 69%,#000 73%,#000 78%,transparent 82%);
+          mask:radial-gradient(closest-side,transparent 0 69%,#000 73%,#000 78%,transparent 82%);
+  filter:blur(46px) saturate(130%);
+  opacity:.9;
+  animation:spin 22s linear infinite;
+}
+/* halo largo e difuso por baixo, dá volume */
+.haze{
+  background:conic-gradient(from 168deg,
+    #16256e 0deg, #2c46c8 70deg, #6d28d9 150deg,
+    #0d9488 250deg, #16256e 360deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 0 56%,#000 74%,transparent 92%);
+          mask:radial-gradient(closest-side,transparent 0 56%,#000 74%,transparent 92%);
+  filter:blur(110px) saturate(130%);
+  opacity:.5;
+  animation:spin 22s linear infinite;
+}
+/* a linha nítida do horizonte, logo acima da faixa colorida */
+.limb{
+  background:linear-gradient(90deg,transparent 4%,rgba(190,215,255,.55) 26%,
+    #fff 50%,rgba(190,215,255,.5) 74%,transparent 96%);
+  -webkit-mask:radial-gradient(closest-side,transparent 0 78.4%,#000 78.8%,#000 79.4%,transparent 79.8%);
+          mask:radial-gradient(closest-side,transparent 0 78.4%,#000 78.8%,#000 79.4%,transparent 79.8%);
+  filter:blur(.7px) drop-shadow(0 0 14px rgba(150,195,255,.85)) drop-shadow(0 0 40px rgba(90,150,255,.45));
+  animation:sway 9s ease-in-out infinite alternate;
+}
+/* A cor viaja girando o ELEMENTO, e nao o angulo do gradiente.
+
+   Antes o giro vinha de animar a propriedade --ang dentro do conic-gradient
+   (login.js registrava a propriedade e injetava @keyframes hue). Propriedade
+   custom animada obriga a REPINTAR: a cada quadro o gradiente conico era
+   gerado de novo e passado pelo filtro — blur(110px) na .haze, blur(46px) na
+   .aurora — em elementos de ~2100x2100px. Sao ~4,5 megapixels por camada,
+   tres camadas, 60 vezes por segundo, para sempre. Em maquina com video
+   integrado isso trava a pagina inteira, e so em navegador com
+   registerProperty: dai travar "para alguns usuarios".
+
+   Girar o elemento da o MESMO desenho, porque a mascara e um
+   radial-gradient — perfeitamente simetrico em relacao ao centro, entao
+   rodar o quadrado nao muda o recorte visivel. E transform e composto na
+   GPU: a camada borrada e rasterizada UMA vez e so gira depois.
+
+   O sway de +-6 graus sai da aurora e da haze (uma volta completa ja o
+   contem) e continua na .limb, cujo fundo e linear e nao pode girar 360. */
+@keyframes spin{
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to  {transform:translate(-50%,-50%) rotate(360deg)}
+}
+@keyframes sway{
+  from{transform:translate(-50%,-50%) rotate(-6deg)}
+  to  {transform:translate(-50%,-50%) rotate(6deg)}
+}
+
+/* poeira estelar */
+.dust{position:absolute;inset:0;opacity:.5;
+  background-image:
+    radial-gradient(1px 1px at 18% 22%,rgba(255,255,255,.7),transparent),
+    radial-gradient(1px 1px at 73% 14%,rgba(255,255,255,.55),transparent),
+    radial-gradient(1px 1px at 41% 9%, rgba(255,255,255,.5),transparent),
+    radial-gradient(1.4px 1.4px at 88% 31%,rgba(255,255,255,.6),transparent),
+    radial-gradient(1px 1px at 8% 41%, rgba(255,255,255,.45),transparent),
+    radial-gradient(1px 1px at 57% 27%,rgba(255,255,255,.4),transparent),
+    radial-gradient(1.2px 1.2px at 30% 36%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 94% 8%, rgba(255,255,255,.5),transparent);
+  animation:twinkle 7s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.32}to{opacity:.62}}
+
+.vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 74% 58% at 50% 44%,transparent 0%,rgba(4,4,9,.45) 60%,#040409 100%)}
+.grain{position:absolute;inset:0;opacity:.14;pointer-events:none;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ══════════════ MODAL ══════════════ */
+.modal{
+  position:relative;z-index:2;width:min(422px,calc(100vw - 28px));
+  background:var(--glass);
+  backdrop-filter:blur(30px) saturate(165%);
+  -webkit-backdrop-filter:blur(30px) saturate(165%);
+  border-radius:28px;
+  padding:24px 26px 22px;
+  box-shadow:0 50px 100px -34px rgba(0,0,0,.9),
+             0 2px 10px rgba(0,0,0,.4),
+             inset 0 -22px 44px -30px rgba(0,0,0,.75);
+  animation:enter .62s cubic-bezier(.16,1,.3,1) both;
+}
+/* borda-gradiente verdadeira: luz mais forte no topo, some embaixo */
+.modal::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(155deg,
+    rgba(255,255,255,.42) 0%, rgba(255,255,255,.10) 26%,
+    rgba(255,255,255,.02) 52%, rgba(255,255,255,.14) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+}
+/* brilho especular no topo do vidro */
+.modal::after{
+  content:"";position:absolute;left:12%;right:12%;top:0;height:52%;border-radius:inherit;
+  pointer-events:none;
+  background:radial-gradient(ellipse 100% 100% at 50% 0%,rgba(255,255,255,.09),transparent 70%)}
+@keyframes enter{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+
+/* entrada escalonada dos elementos */
+.st{animation:up .5s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i)*55ms + 120ms)}
+@keyframes up{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;position:relative}
+
+/* segmentado com indicador deslizante */
+.seg{position:relative;display:flex;padding:3px;border-radius:999px;
+  background:rgba(255,255,255,.05);
+  box-shadow:inset 0 1px 1px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.05)}
+.thumb{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:999px;
+  background:rgba(255,255,255,.115);
+  box-shadow:0 1px 3px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.13);
+  transition:transform .34s cubic-bezier(.4,0,.2,1),width .34s cubic-bezier(.4,0,.2,1)}
+.seg button{position:relative;z-index:1;border:0;background:transparent;cursor:pointer;
+  font-family:inherit;font-size:13.5px;font-weight:500;color:rgba(255,255,255,.48);
+  padding:8px 20px;border-radius:999px;transition:color .24s}
+.seg button[aria-selected="true"]{color:#fff}
+.seg button:hover{color:rgba(255,255,255,.82)}
+
+.close{width:34px;height:34px;flex:none;display:grid;place-items:center;cursor:pointer;
+  border:0;border-radius:50%;color:rgba(255,255,255,.7);
+  background:rgba(255,255,255,.085);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+  transition:.2s}
+.close:hover{background:rgba(255,255,255,.17);color:#fff;transform:rotate(90deg)}
+
+h1{font-size:26px;font-weight:700;letter-spacing:-.032em;margin-bottom:20px;
+   text-shadow:0 1px 12px rgba(0,0,0,.35)}
+
+/* ── campos ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.ctrl{position:relative;display:flex;align-items:center;gap:10px;
+  height:52px;padding:0 15px;border-radius:13px;margin-bottom:12px;
+  background:rgba(255,255,255,.045);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),
+             inset 0 1px 0 rgba(255,255,255,.05),
+             inset 0 -2px 5px -3px rgba(0,0,0,.6);
+  transition:background .2s,box-shadow .2s}
+.grid2 .ctrl{margin-bottom:0}
+.ctrl:hover{background:rgba(255,255,255,.06)}
+.ctrl:focus-within{background:rgba(255,255,255,.075);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.26),0 0 0 3.5px rgba(120,110,255,.16)}
+.ctrl.bad{box-shadow:inset 0 0 0 1px rgba(255,116,116,.6),0 0 0 3.5px rgba(255,90,90,.12)}
+.ctrl input{flex:1;min-width:0;background:transparent;border:0;outline:0;
+  font-family:inherit;font-size:14.5px;color:#fff;letter-spacing:-.006em}
+.ctrl input::placeholder{color:rgba(255,255,255,.38)}
+/* o navegador força fundo branco em campos com autofill (e-mail/senha
+   salvos) — sobrescreve pra manter o preto fosco do design */
+.ctrl input:-webkit-autofill,
+.ctrl input:-webkit-autofill:hover,
+.ctrl input:-webkit-autofill:focus,
+.ctrl input:-webkit-autofill:active,
+.ctrl input:autofill{
+  -webkit-text-fill-color:#fff;
+  -webkit-box-shadow:0 0 0 1000px #16161b inset;
+  box-shadow:0 0 0 1000px #16161b inset;
+  caret-color:#fff;
+  transition:background-color 5000s ease-in-out 0s;
+}
+.ctrl>svg{flex:none;color:rgba(255,255,255,.42)}
+.eye{background:none;border:0;cursor:pointer;color:rgba(255,255,255,.4);padding:4px;display:grid;place-items:center}
+.eye:hover{color:#fff}
+
+/* ── campo @usuário ── */
+.at{flex:none;color:rgba(255,255,255,.5);font-size:15px;font-weight:700;letter-spacing:-.01em}
+.ustat{flex:none;font-size:12px;font-weight:600;white-space:nowrap;transition:color .2s}
+.ustat[data-s="ok"]{color:#6ee7b7}
+.ustat[data-s="bad"]{color:#ff9090}
+.ustat[data-s="checking"]{color:rgba(255,255,255,.4)}
+#userCtrl.ok{box-shadow:inset 0 0 0 1px rgba(110,231,183,.5),0 0 0 3.5px rgba(52,211,153,.12)}
+#userCtrl.bad{box-shadow:inset 0 0 0 1px rgba(255,116,116,.6),0 0 0 3.5px rgba(255,90,90,.12)}
+.uhint{margin:6px 2px 0;font-size:11px;color:rgba(255,255,255,.34);transition:color .2s}
+
+/* ── overlay de escolha de @ (fluxo Google) ── */
+.uname-ov{position:absolute;inset:0;z-index:5;border-radius:inherit;display:none;
+  flex-direction:column;justify-content:center;padding:26px;
+  background:rgba(16,16,21,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  animation:up .3s cubic-bezier(.16,1,.3,1) both}
+.uname-ov.on{display:flex}
+.uname-ov h2{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.uname-ov p{font-size:12.5px;color:rgba(255,255,255,.5);margin-bottom:18px;line-height:1.5}
+
+/* colapso animado ao trocar de modo */
+.collapse{display:grid;grid-template-rows:1fr;opacity:1;
+  transition:grid-template-rows .4s cubic-bezier(.4,0,.2,1),opacity .26s ease}
+.collapse[data-off]{grid-template-rows:0fr;opacity:0;pointer-events:none}
+.collapse>div{overflow:hidden;min-height:0}
+
+/* botão principal */
+.primary{width:100%;height:52px;border:0;border-radius:13px;cursor:pointer;margin-top:8px;
+  background:linear-gradient(180deg,#fdfdfd 0%,#dcdce1 100%);
+  color:#101014;font-family:inherit;font-size:14.5px;font-weight:600;letter-spacing:-.012em;
+  box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 10px 26px -12px rgba(0,0,0,.85),
+             0 0 0 1px rgba(0,0,0,.18);
+  transition:.2s}
+.primary:hover{background:linear-gradient(180deg,#fff 0%,#e8e8ec 100%);transform:translateY(-1px);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 14px 30px -12px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.18)}
+.primary:active{transform:translateY(0) scale(.994)}
+.primary[disabled]{opacity:.62;cursor:progress;transform:none}
+
+.or{display:flex;align-items:center;gap:14px;margin:20px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent)}
+.or span{font-size:10px;font-weight:500;letter-spacing:.11em;color:rgba(255,255,255,.36);white-space:nowrap}
+
+.social{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.social button{height:52px;border:0;border-radius:13px;cursor:pointer;display:grid;place-items:center;
+  background:rgba(255,255,255,.045);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 1px 0 rgba(255,255,255,.05);
+  transition:.2s}
+.social button:hover{background:rgba(255,255,255,.1);transform:translateY(-1px);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),0 8px 20px -10px rgba(0,0,0,.7)}
+
+.terms{margin-top:18px;text-align:center;font-size:11.5px;color:rgba(255,255,255,.34)}
+.terms a{color:rgba(255,255,255,.55);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.18)}
+.terms a:hover{color:#fff;border-color:rgba(255,255,255,.5)}
+
+.fpass{display:flex;justify-content:flex-end;margin:-4px 0 12px}
+.fpass a{font-size:11.5px;color:rgba(255,255,255,.4);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.fpass a:hover{color:#fff}
+
+.msg{display:none;margin-top:12px;text-align:center;font-size:12.5px;color:#ff9090}
+.msg.on{display:block;animation:up .22s ease both}
+.msg.ok{color:#6ee7b7}
+
+:focus-visible{outline:2px solid rgba(170,190,255,.75);outline-offset:2px}
+
+@media(max-width:430px){
+  :root{--band:70vh}
+  .modal{padding:20px 18px 18px;border-radius:24px}
+  h1{font-size:22px}
+  .grid2{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body class="login-page" data-i18n-static>
+
+<div data-language-selector></div>
+
+<div class="scene" aria-hidden="true">
+  <div class="circle haze"></div>
+  <div class="circle aurora" id="aurora"></div>
+  <div class="circle limb"></div>
+  <div class="dust"></div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+</div>
+
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ttl">
+
+  <div class="top st" style="--i:0">
+    <div class="seg" role="tablist">
+      <span class="thumb" id="thumb"></span>
+      <button role="tab" type="button" aria-selected="true"  data-mode="signup">Criar conta</button>
+      <button role="tab" type="button" aria-selected="false" data-mode="signin">Entrar</button>
+    </div>
+    <button class="close" id="close" aria-label="Fechar">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1 1l10 10M11 1L1 11"/></svg>
+    </button>
+  </div>
+
+  <h1 id="ttl" class="st" style="--i:1">Criar conta</h1>
+
+  <form id="form" novalidate>
+
+    <div class="collapse st" id="cNames" style="--i:2"><div>
+      <div class="grid2">
+        <div class="ctrl"><input id="first" type="text" autocomplete="given-name"  placeholder="Nome"></div>
+        <div class="ctrl"><input id="last"  type="text" autocomplete="family-name" placeholder="Sobrenome"></div>
+      </div>
+    </div></div>
+
+    <div class="collapse st" id="cUser" style="--i:2.5"><div>
+      <div class="ctrl" id="userCtrl">
+        <span class="at">@</span>
+        <input id="username" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="20" placeholder="usuário (é como te encontram)">
+        <span class="ustat" id="userStat" aria-live="polite"></span>
+      </div>
+      <div class="uhint" id="userHint">3–20 caracteres · letras, números e _</div>
+    </div></div>
+
+    <div class="ctrl st" style="--i:3">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1.2" y="3.3" width="13.6" height="9.4" rx="2.2"/><path d="M1.9 4.5L8 9l6.1-4.5"/>
+      </svg>
+      <input id="email" type="email" autocomplete="email" placeholder="Seu e-mail">
+    </div>
+
+    <div class="ctrl st" style="--i:4">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="2.5" y="6.9" width="11" height="7.4" rx="2.2"/><path d="M5.3 6.9V4.9a2.7 2.7 0 015.4 0v2"/>
+      </svg>
+      <input id="password" type="password" autocomplete="current-password" placeholder="Sua senha">
+      <button class="eye" type="button" id="eye" aria-label="Mostrar senha">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M1 8s2.6-4.4 7-4.4S15 8 15 8s-2.6 4.4-7 4.4S1 8 1 8z"/><circle cx="8" cy="8" r="1.9"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="collapse" id="cForgot" data-off style="--i:4.5"><div>
+      <div class="fpass"><a id="forgot-pass" tabindex="0">Esqueci minha senha</a></div>
+    </div></div>
+
+    <button class="primary st" type="submit" id="submit" style="--i:5">Criar conta</button>
+    <p class="msg" id="msg"></p>
+  </form>
+
+  <div class="or st" style="--i:6"><span>OU ENTRE COM</span></div>
+
+  <div class="social st" style="--i:7">
+    <button type="button" id="btn-google" aria-label="Continuar com Google">
+      <svg width="19" height="19" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.6 9.2c0-.6 0-1.2-.2-1.8H9v3.4h4.8a4.1 4.1 0 01-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 009 18z"/><path fill="#FBBC05" d="M3.9 10.7a5.4 5.4 0 010-3.4V5H.9a9 9 0 000 8l3-2.3z"/><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 00.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/></svg>
+    </button>
+    <button type="button" id="btn-facebook" aria-label="Continuar com Facebook">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.5h-2.8V24C19.61 23.1 24 18.1 24 12.07"/></svg>
+    </button>
+  </div>
+
+  <p class="terms st" style="--i:8">Ao criar uma conta, você concorda com os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a></p>
+
+  <!-- Overlay: escolher @ ao entrar com Google pela primeira vez -->
+  <div class="uname-ov" id="unameOv">
+    <h2>Escolha seu @</h2>
+    <p>É o nome pelo qual seus amigos vão te encontrar e convidar. Você não poderá enviar/receber convites sem ele.</p>
+    <div class="ctrl" id="ovCtrl">
+      <span class="at">@</span>
+      <input id="ovUsername" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="20" placeholder="seu_usuario">
+      <span class="ustat" id="ovStat" aria-live="polite"></span>
+    </div>
+    <div class="uhint" id="ovHint">3–20 caracteres · letras, números e _</div>
+    <button class="primary" type="button" id="ovConfirm" style="margin-top:16px">Confirmar</button>
+  </div>
+</div>
+
+  <script src="js/i18n.js?v=19"></script>
+<script src="js/login.js?v=26"></script>
+</body>
+</html>

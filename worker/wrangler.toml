@@ -1,0 +1,15 @@
+# Isolated Cloudflare Worker configuration for MyDesk-Colab.
+# No production Worker name, production URL, cron, or secret is included.
+name = "mydesk-collab-reminders"
+main = "src/worker.js"
+compatibility_date = "2026-07-01"
+
+[vars]
+# Disabled by default. Enable only with an isolated Cloudflare account,
+# Firebase development project, and Resend test account.
+MYDESK_COLLAB_MODE = "1"
+MYDESK_ENABLE_SCHEDULED_JOBS = "0"
+MYDESK_ENABLE_EMAIL = "0"
+REMETENTE = "MyDesk Colab <reminders@example.test>"
+APP_URL = "http://localhost:3000"
+LOGO_URL = "http://localhost:3000/img/logo-mydesk.png"

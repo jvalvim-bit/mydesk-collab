@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ═══════════════════════════════════════════════════════════════
+     Página PÚBLICA do formulário: quem abre isto não tem conta no MyDesk.
+     Por isso ela não carrega o SDK do Firebase nem o app — só fala com
+     /api/form, que é quem toca no banco. A CSP é a mais fechada do site:
+     sem script inline, sem origem externa além da função da Vercel.
+     ═══════════════════════════════════════════════════════════════ -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data:;
+  connect-src 'self' http://localhost:3000;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'none';
+">
+  <title data-i18n="form.title">Formulário · MyDesk</title>
+  <!-- Formulário de terceiro não deve entrar em índice de busca. -->
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#6366f1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/formulario.css?v=5">
+  <link rel="stylesheet" href="css/i18n.css?v=1">
+</head>
+<body data-i18n-static>
+
+<div class="pf-ambiente" aria-hidden="true">
+  <i></i><i></i><i></i>
+</div>
+<main class="pf-wrap">
+  <header class="pf-brandbar">
+    <a class="pf-brand" href="landing.html" aria-label="Conheça o MyDesk">
+      <span class="pf-brand-mark">M</span>
+      <span class="pf-brand-name">MyDesk</span>
+    </a>
+    <div data-language-selector></div>
+    <span class="pf-seguro"><i></i> Ambiente seguro</span>
+  </header>
+  <div class="pf-card" id="pf-card">
+    <div class="pf-carregando" id="pf-carregando">Carregando formulário…</div>
+  </div>
+  <div class="pf-rodape">
+    <span>Formulário criado com</span> <a href="landing.html">MyDesk</a>
+    <i>·</i> <span class="pf-rodape-tagline">Organização simples, trabalho claro.</span>
+  </div>
+</main>
+
+<script src="js/brazil-services.js?v=2"></script>
+  <script src="js/i18n.js?v=15"></script>
+<script src="js/formulario.js?v=8"></script>
+</body>
+</html>

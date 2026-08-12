@@ -1,0 +1,1205 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ═══════════════════════════════════════════════════════════════
+     Content-Security-Policy
+     script-src NÃO tem 'unsafe-inline': por isso todo handler on*= saiu do
+     HTML (js/handlers-*.js) e o HTML gerado em runtime usa data-act. Assim,
+     mesmo que um XSS armazenado consiga injetar markup, o navegador recusa
+     executar script inline — que é o formato de praticamente todo payload.
+     Origens liberadas, uma a uma: Firebase (SDK, banco e iframe do login
+     Google), fontes do Google, funções da Vercel, rádio Lo-Fi (SomaFM),
+     ipapi (fuso), Microsoft Graph (Outlook) e os provedores de métricas.
+     ═══════════════════════════════════════════════════════════════ -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' https://www.gstatic.com https://apis.google.com https://cloud.umami.is https://plausible.io https://www.googletagmanager.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data: blob: https:;
+  media-src 'self' data: blob: https://ice6.somafm.com https://somafm.com;
+  worker-src 'self' blob:;
+  connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://mydesk-eta.vercel.app https://ipapi.co https://ice6.somafm.com https://somafm.com https://graph.microsoft.com https://login.microsoftonline.com https://cloud.umami.is https://plausible.io https://www.google-analytics.com;
+  frame-src 'self' https://mydesk-ad0da.firebaseapp.com https://accounts.google.com https://login.microsoftonline.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
+<title data-i18n="landing.title">MyDesk — Notas, CRM financeiro e equipe no mesmo lugar</title>
+<meta name="description" data-i18n-content="landing.metaDescription" content="MyDesk é um workspace de notas com CRM financeiro, workspaces em grupo, chat e videochamada em tempo real. Grátis para começar, sem cartão de crédito.">
+<link rel="canonical" href="https://mydesk.social/landing.html">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#040409">
+
+<!-- A MESMA verificação de domínio do Meta que está em index.html. O Facebook
+     confere a RAIZ (mydesk.social/), que é o index; esta cópia existe porque a
+     landing é a página que se divulga em anúncio, e quem abrir o código-fonte
+     dela procurando a metatag precisa achá-la. Se um dia a landing virar a
+     raiz, a verificação não quebra. -->
+<meta name="facebook-domain-verification" content="coffdxy8d7nq1k6dauf8yopofsrngq">
+
+<!-- Card de compartilhamento (WhatsApp, LinkedIn, X, Facebook) -->
+<meta property="og:site_name" content="MyDesk">
+<meta property="og:locale" data-i18n-content="landing.ogLocale" content="pt_BR">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mydesk.social/landing.html">
+<meta property="og:title" data-i18n-content="landing.title" content="MyDesk — Notas, CRM financeiro e equipe no mesmo lugar">
+<meta property="og:description" data-i18n-content="landing.ogDescription" content="Capture ideias, organize clientes e nunca mais perca um prazo. Grátis para começar, sem cartão de crédito.">
+<meta property="og:image" content="https://mydesk.social/img/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" data-i18n-content="landing.ogImageAlt" content="MyDesk — notas, CRM financeiro e equipe no mesmo lugar">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" data-i18n-content="landing.title" content="MyDesk — Notas, CRM financeiro e equipe no mesmo lugar">
+<meta name="twitter:description" data-i18n-content="landing.ogDescription" content="Capture ideias, organize clientes e nunca mais perca um prazo. Grátis para começar, sem cartão de crédito.">
+<meta name="twitter:image" content="https://mydesk.social/img/og-cover.jpg">
+
+<script id="landing-schema" type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "MyDesk",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "url": "https://mydesk.social/",
+  "sameAs": "https://mydesk.social/landing.html",
+  "image": "https://mydesk.social/img/og-cover.jpg",
+  "inLanguage": "pt-BR",
+  "description": "Workspace de notas com CRM financeiro, workspaces em grupo, chat e videochamada em tempo real.",
+  "offers": [
+    { "@type": "Offer", "name": "Gratuito", "price": "0",  "priceCurrency": "BRL" },
+    { "@type": "Offer", "name": "Premium",  "price": "19.99", "priceCurrency": "BRL",
+      "priceSpecification": { "@type": "UnitPriceSpecification", "price": "19.99", "priceCurrency": "BRL",
+        "billingDuration": 1, "billingIncrement": 1, "unitCode": "MON" } }
+  ]
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/i18n.css?v=1">
+<script src="js/frame-guard.js?v=1"></script>
+<script src="js/analytics.js?v=2"></script>
+<style>
+:root{
+  --bg:#040409; --bg-2:#08080d;
+  --card:rgba(255,255,255,.035); --border:rgba(255,255,255,.09); --border-hover:rgba(129,140,248,.4);
+  --text:#f5f5f7; --text-dim:rgba(245,245,247,.5); --text-faint:rgba(245,245,247,.32);
+  --accent:#6366f1; --accent-light:#a5b4fc;
+  --radius:12px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;opacity:0;transition:opacity .4s ease;}
+body.page-ready{opacity:1;}
+@media(prefers-reduced-motion:reduce){body{transition:none;opacity:1;}}
+.hl{background:linear-gradient(135deg,#a5b4fc,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* ══ HERO BG — glow radial indigo + partículas animadas em canvas ══ */
+.hero-wrap{
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse 65% 55% at 50% 18%, rgba(99,102,241,.22), transparent 70%),
+    var(--bg);
+}
+.hero-particles{position:absolute;inset:0;z-index:0;pointer-events:none;}
+.hero-fade{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,transparent 0%,transparent 55%,var(--bg) 100%);}
+
+/* ══ NAV ══ */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:28px;padding:16px 6vw;background:rgba(5,5,11,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border);}
+.nav-logo{display:flex;align-items:center;}
+.brand-logo{height:76px;width:auto;display:block;}
+.nav-links{display:flex;gap:26px;margin-left:8px;}
+.nav-links a{font-size:.82rem;color:var(--text-dim);text-decoration:none;}
+.nav-links a:hover,.nav-links a.active{color:var(--text);}
+.nav-spacer{flex:1;}
+.nav-cta{background:#fff;color:#0a0a0a;border:none;border-radius:8px;padding:9px 18px;font-size:.82rem;font-weight:700;cursor:pointer;}
+.nav-cta:hover{opacity:.85;}
+.nav-signin{background:none;border:none;color:var(--text-dim);font-size:.82rem;font-weight:600;cursor:pointer;padding:9px 10px;font-family:inherit;}
+.nav-signin:hover{color:var(--text);}
+@media(max-width:520px){.nav-cta{padding:9px 13px;} .nav-links{display:none;}}
+
+/* ══ HERO CONTENT ══ */
+.hero{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:18px 6vw 64px;text-align:center;}
+/* A arte dentro do PNG é bem menor que a caixa — altura grande demais aqui
+   vira ar em volta do logo e empurra o título para baixo da dobra. */
+.hero-logo{height:108px;width:auto;margin:0 auto 12px;display:block;}
+/* O vídeo entra no lugar do <img> e herda a classe. 136px, e não os 108 do
+   PNG, porque o quadro do vídeo tem uma faixa de aura em volta do desenho:
+   igualando a ALTURA DO ARQUIVO, o logo apareceria menor que o estático. A
+   conta é a proporção entre o desenho (137px) e o quadro recortado (174px). */
+video.hero-logo{height:136px;object-fit:contain;pointer-events:none;
+  background:transparent;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.68rem;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent-light);margin-bottom:22px;}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.1rem,5vw,3.4rem);line-height:1.35;letter-spacing:-1px;margin:0 0 26px;}
+
+/* ══ HERO TITLE — palavras entram com movimento e continuam vivas, flutuando em onda; "pensam" ganha brilho extra ══ */
+.hero h1 .word-bob{display:inline-block;vertical-align:top;}
+.hero h1 .word-mask{display:inline-block;overflow:hidden;vertical-align:top;}
+.hero h1 .word-in{display:inline-block;transform:translateY(120%);opacity:0;}
+.hero h1.words-in .word-in{transition:transform .85s cubic-bezier(.16,1,.3,1),opacity .7s ease;transform:translateY(0);opacity:1;}
+.hero h1.words-in .word-bob{animation:heroWave 2.6s ease-in-out infinite;}
+@keyframes heroWave{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.hero h1 .hl{display:inline-block;background-size:200% 200%;animation:heroShine 3s ease-in-out infinite;}
+@keyframes heroShine{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero h1.words-in .word-bob-hl{animation:heroWaveBig 2.6s ease-in-out infinite;}
+@keyframes heroWaveBig{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-17px) scale(1.06);}}
+.hero p{font-size:1.02rem;color:var(--text-dim);max-width:520px;margin:0 auto 34px;line-height:1.7;}
+.hero-ctas{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.hero-microcopy{font-size:.76rem;color:var(--text-faint);margin-bottom:56px;}
+.btn-fill{background:#fff;color:#0a0a0a;border:none;border-radius:10px;padding:13px 26px;font-size:.9rem;font-weight:700;cursor:pointer;}
+.btn-fill:hover{opacity:.88;}
+.btn-outline{background:rgba(255,255,255,.06);color:#fff;border:1px solid var(--border);border-radius:10px;padding:13px 26px;font-size:.9rem;font-weight:600;cursor:pointer;}
+.btn-outline:hover{background:rgba(255,255,255,.1);}
+
+/* screenshot */
+.shot{max-width:820px;margin:0 auto;background:#0b0b10;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6);}
+.shot-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);}
+.shot-dot{width:9px;height:9px;border-radius:50%;}
+.shot-tag{margin-left:10px;font-size:.6rem;color:var(--text-faint);font-family:'JetBrains Mono',monospace;}
+.shot-body{position:relative;min-height:300px;background:#0a0a0a;overflow:hidden;}
+.shot-img{display:block;width:100%;height:auto;transform-origin:50% 30%;animation:kenburns 7s ease-in-out infinite alternate;}
+@keyframes kenburns{0%{transform:scale(1) translate(0,0);}100%{transform:scale(1.07) translate(-1.2%,-1%);}}
+@keyframes kenburnsCalm{0%{transform:scale(1);}100%{transform:scale(1.02);}}
+@media(prefers-reduced-motion:reduce){.shot-img{animation:kenburnsCalm 15s ease-in-out infinite alternate;}}
+
+/* ══ SECTION SHELL ══ */
+.section{max-width:1080px;margin:0 auto;padding:96px 6vw;}
+.section-head{max-width:600px;margin:0 auto 48px;text-align:center;}
+.section-head .eyebrow{justify-content:center;}
+.section-head h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.9rem,3.6vw,2.6rem);letter-spacing:-1px;line-height:1.15;margin:0 0 14px;}
+.section-head p{font-size:.95rem;color:var(--text-dim);line-height:1.7;margin:0;}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);max-width:1080px;margin:0 auto;}
+
+/* ══ RECURSOS — 4 pilares explicados, não uma grade de mini-cards ══ */
+.pillars{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.pillar{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;transition:border-color .2s;}
+.pillar:hover{border-color:var(--border-hover);}
+.pillar .ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(99,102,241,.14);margin-bottom:16px;}
+.pillar h3{font-size:1.05rem;font-weight:700;margin:0 0 10px;font-family:'Syne',sans-serif;}
+.pillar p{font-size:.85rem;color:var(--text-dim);line-height:1.75;margin:0 0 16px;}
+.pillar-preview{background:#0a0a0f;border:1px solid var(--border);border-radius:10px;margin-bottom:16px;}
+.pillar-note{color:var(--accent-light);}
+.pillar-tags{display:flex;flex-wrap:wrap;gap:8px;}
+.pillar-tags span{font-size:.7rem;color:var(--text-faint);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:20px;padding:5px 12px;}
+@media(max-width:760px){.pillars{grid-template-columns:1fr;}}
+
+/* ══ STEPS ══ */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;margin-bottom:8px;}
+.steps::before{content:'';position:absolute;top:21px;left:12%;right:12%;height:1px;background:var(--border);}
+.step{position:relative;text-align:center;padding:0 14px;}
+.step-num{width:42px;height:42px;border-radius:50%;background:var(--bg);border:1px solid var(--border-hover);color:var(--accent-light);font-family:'Syne',sans-serif;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;position:relative;z-index:1;}
+.step h4{font-size:.87rem;font-weight:700;margin:0 0 6px;}
+.step p{font-size:.76rem;color:var(--text-dim);line-height:1.6;margin:0;}
+@media(max-width:700px){.steps{grid-template-columns:1fr;gap:28px;}.steps::before{display:none;}}
+
+/* ══ PESSOAL x GRUPO ══ */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.split-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;}
+.split-card .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;background:rgba(99,102,241,.14);margin-bottom:16px;}
+.split-card h3{font-size:1rem;font-weight:700;margin:0 0 8px;}
+.split-card p{font-size:.82rem;color:var(--text-dim);line-height:1.65;margin:0 0 18px;}
+.split-list{display:flex;flex-direction:column;gap:9px;}
+.split-list div{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text-dim);}
+.split-list i{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+@media(max-width:760px){.split{grid-template-columns:1fr;}}
+/* Empilhados, os cartões deixam de ter altura em comum a igualar — e o `flex:1`
+   da lista de itens, que existe para alinhar os botões lado a lado, vira um
+   buraco de dezenas de pixels no cartão que tem menos linhas. Empilhado, o
+   botão segue o conteúdo. */
+@media(max-width:760px){
+  .plan-feats{flex:0 0 auto;}
+  .plan{min-width:0;}
+}
+
+/* ══ INTEGRATIONS ══ */
+.int-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:36px;}
+.int-icon{width:98px;height:72px;background:var(--card);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:1.3rem;}
+.int-icon span{font-size:.62rem;color:var(--text-faint);}
+
+/* ══ PRICING ══ */
+.plans{display:flex;gap:20px;flex-wrap:wrap;margin-top:36px;}
+.plan{flex:1;min-width:260px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;display:flex;flex-direction:column;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;}
+.plan:hover{transform:translateY(-5px);border-color:var(--border-hover);box-shadow:0 18px 40px rgba(0,0,0,.4);}
+.plan.premium{background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(79,70,229,.06));border-color:rgba(99,102,241,.4);position:relative;animation:planGlow 3.4s ease-in-out infinite;}
+.plan-badge{position:absolute;top:16px;right:16px;background:linear-gradient(135deg,var(--accent),#4f46e5);border-radius:20px;padding:3px 10px;font-size:.6rem;font-weight:700;color:#fff;text-transform:uppercase;animation:badgePulse 2.4s ease-in-out infinite;}
+@keyframes planGlow{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.22);}50%{box-shadow:0 0 34px 4px rgba(99,102,241,.3);}}
+@keyframes badgePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+/* planGlow é só box-shadow — nada se desloca, então fica de pé em qualquer modo. */
+.plan-eyebrow{font-size:.64rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-faint);margin-bottom:12px;}
+.plan.premium .plan-eyebrow{color:var(--accent-light);}
+/* Com R$ 199,99 o tamanho fixo de 2.4rem jogava o "R$" para uma linha e
+   estourava o cartão. clamp encolhe conforme a largura disponível, e o
+   nowrap mantém valor e moeda juntos — preço partido em duas linhas se lê
+   como dois números. */
+/* O tamanho do preço tem de sair da largura do CARTÃO, não da tela: são três
+   cartões lado a lado, então cada um tem cerca de um terço do espaço, e medir
+   em vw dava um número que não cabia — era isso que fazia "R$ 199,99" furar a
+   borda direita. cqi é a largura do próprio cartão; vw fica como reserva para
+   navegador sem suporte a container query. */
+.plan{container-type:inline-size;}
+.plan-price{font-family:'Syne',sans-serif;font-size:clamp(1.35rem,10.5cqi,2.15rem);font-weight:800;
+  letter-spacing:-1.2px;line-height:1.18;margin-bottom:6px;white-space:nowrap;}
+@supports not (width: 1cqi){
+  .plan-price{font-size:clamp(1.35rem,3.4vw,2.05rem);}
+}
+.plan-period{font-size:.76rem;color:var(--text-faint);margin-bottom:22px;line-height:1.5;}
+.plan-feats{display:flex;flex-direction:column;gap:9px;flex:1;margin-bottom:22px;}
+.plan-feats div{display:flex;align-items:center;gap:8px;font-size:.79rem;color:rgba(245,245,247,.78);}
+.plan-feats div.off{color:var(--text-faint);}
+.plan-feats .ck{color:#34d399;}
+.plan.premium .plan-feats .ck{color:var(--accent-light);}
+.plan-btn{width:100%;padding:12px;border-radius:10px;font-size:.84rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,.06);color:#fff;}
+.plan-btn:hover{background:rgba(255,255,255,.1);}
+.plan-btn.premium{background:linear-gradient(135deg,var(--accent),#4f46e5);border:none;}
+/* Card anual: mesmo destaque do mensal, em verde, para o olho separar os dois */
+.plan.plan-anual{background:linear-gradient(135deg,rgba(16,185,129,.14),rgba(5,150,105,.06));border-color:rgba(16,185,129,.4);animation:none;}
+.plan.plan-anual .plan-eyebrow{color:#6ee7b7;}
+.plan.plan-anual .plan-feats .ck{color:#34d399;}
+.plan-badge.badge-anual{background:linear-gradient(135deg,#10b981,#059669);}
+.plan.plan-anual .plan-btn.premium{background:linear-gradient(135deg,#10b981,#059669);}
+.plan-note{text-align:center;margin-top:20px;font-size:.72rem;color:var(--text-faint);}
+
+/* ══ FAQ ══ */
+.faq-item{border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;margin-bottom:10px;}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:var(--card);font-size:.85rem;font-weight:600;}
+.faq-arrow{font-size:.7rem;color:var(--text-faint);transition:transform .2s;flex-shrink:0;margin-left:12px;}
+.faq-item.open .faq-arrow{transform:rotate(180deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.faq-item.open .faq-a{max-height:400px;}
+.faq-a div{padding:0 18px 16px;font-size:.8rem;color:var(--text-dim);line-height:1.7;}
+
+/* ══ DEPOIMENTOS (a seção está comentada no HTML até haver frases reais) ══ */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.quote{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:border-color .2s;}
+.quote:hover{border-color:var(--border-hover);}
+.quote p{font-size:.88rem;line-height:1.7;color:var(--text);margin:0 0 18px;}
+.quote-who b{display:block;font-size:.82rem;}
+.quote-who span{font-size:.74rem;color:var(--text-faint);}
+@media(max-width:820px){.quotes{grid-template-columns:1fr;}}
+
+/* ══ FINAL CTA ══ */
+.cta{text-align:center;padding:100px 6vw;border-top:1px solid var(--border);}
+.cta h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.9rem,3.6vw,2.7rem);letter-spacing:-1px;margin:0 0 16px;}
+.cta p{font-size:.92rem;color:var(--text-dim);margin:0 0 36px;line-height:1.7;}
+.cta-trust{display:flex;gap:22px;justify-content:center;margin-top:26px;flex-wrap:wrap;font-size:.72rem;color:var(--text-faint);}
+
+/* ══ NOVIDADES POR E-MAIL ══ */
+.news-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:30px 32px;
+  display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;}
+.news-text h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin:0 0 8px;}
+.news-text p{font-size:.84rem;color:var(--text-dim);margin:0;max-width:430px;line-height:1.65;}
+.news-form{display:flex;gap:10px;flex-wrap:wrap;}
+.news-form input[type=email]{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;
+  padding:12px 15px;font-size:.86rem;color:var(--text);font-family:inherit;min-width:230px;}
+.news-form input[type=email]:focus{outline:none;border-color:var(--border-hover);}
+.news-form button{background:#fff;color:#0a0a0a;border:none;border-radius:10px;padding:12px 22px;
+  font-size:.86rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.news-form button:hover{opacity:.88;}
+.news-form button:disabled{opacity:.5;cursor:default;}
+.news-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;}
+.news-msg{margin-top:14px;font-size:.82rem;min-height:20px;text-align:center;}
+.news-msg.ok{color:#6ee7b7;} .news-msg.err{color:#fca5a5;}
+@media(max-width:760px){.news-box{flex-direction:column;align-items:stretch;} .news-form input[type=email]{flex:1;}}
+
+/* ══ FOOTER ══ */
+.footer{border-top:1px solid var(--border);padding:56px 6vw 28px;}
+.footer-grid{display:flex;gap:56px;flex-wrap:wrap;justify-content:space-between;max-width:1080px;margin:0 auto 32px;}
+.footer-brand-name{display:flex;align-items:center;margin-bottom:10px;}
+.footer-brand-desc{font-size:.79rem;color:var(--text-faint);max-width:280px;line-height:1.6;}
+.footer-col-title{font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;}
+.footer-col a{display:block;font-size:.79rem;color:var(--text-faint);text-decoration:none;margin-bottom:9px;cursor:pointer;}
+.footer-col a:hover{color:#fff;}
+.footer-bottom{max-width:1080px;margin:0 auto;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.72rem;color:var(--text-faint);}
+
+/* ══ TOUR EM VÍDEO — card centralizado ══
+   No canto ele passava despercebido. Fica no centro, com um fundo apenas
+   escurecido (não opaco): a página continua visível atrás, e o card é
+   metade da largura da tela — longe de ocupar tudo. */
+.tour-fundo{position:fixed;inset:0;z-index:69;background:rgba(4,4,10,.62);backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);animation:tourFundoEntra .3s ease both;}
+.tour-fundo[hidden]{display:none;}
+@keyframes tourFundoEntra{from{opacity:0}to{opacity:1}}
+.tour{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:70;
+  width:760px;max-width:calc(100vw - 32px);
+  background:#0b0b12;border:1px solid rgba(255,255,255,.14);border-radius:16px;overflow:hidden;
+  box-shadow:0 34px 90px rgba(0,0,0,.72);animation:tourEntra .38s cubic-bezier(.16,1,.3,1) both;}
+@keyframes tourEntra{
+  from{opacity:0;transform:translate(-50%,-50%) scale(.95)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.tour[hidden]{display:none;}
+.tour.grande{width:min(1180px,calc(100vw - 32px));}
+.tour-topo{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;background:rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.08);}
+.tour-titulo{flex:1;font-size:.74rem;font-weight:600;color:rgba(245,245,247,.72);letter-spacing:.2px;}
+.tour-btn{width:26px;height:26px;flex-shrink:0;border:none;background:rgba(255,255,255,.07);border-radius:7px;
+  color:rgba(245,245,247,.7);font-size:.8rem;line-height:1;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:background .15s,color .15s;font-family:inherit;}
+.tour-btn:hover{background:rgba(255,255,255,.16);color:#fff;}
+.tour-video{display:block;width:100%;aspect-ratio:16/9;background:#000;}
+.tour-progresso{height:3px;background:rgba(255,255,255,.1);}
+.tour-progresso i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#22d3ee);transition:width .2s linear;}
+/* Link discreto abaixo dos botões do hero */
+.hero-link{background:none;border:none;color:var(--text-faint);font-family:inherit;font-size:.76rem;
+  cursor:pointer;padding:6px 10px;border-radius:8px;text-decoration:underline;text-underline-offset:3px;}
+.hero-link:hover{color:var(--text);}
+@media(max-width:560px){
+  .tour,.tour.grande{width:calc(100vw - 24px);}
+  .tour-titulo{font-size:.7rem;}
+}
+
+/* ══ BOTÃO DE SUPORTE FLUTUANTE ══ */
+.support-fab{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:9px;
+  padding:11px 17px;border-radius:30px;text-decoration:none;color:#fff;font-size:.82rem;
+  background:linear-gradient(135deg,var(--accent),#4f46e5);box-shadow:0 10px 30px rgba(79,70,229,.42);
+  transition:transform .2s ease,box-shadow .2s ease;}
+.support-fab.is-wa{background:linear-gradient(135deg,#25d366,#128c7e);box-shadow:0 10px 30px rgba(18,140,126,.42);}
+.support-fab:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(79,70,229,.5);}
+.support-fab b{font-weight:600;}
+.support-fab svg{width:19px;height:19px;flex-shrink:0;display:block;}
+.support-fab.is-wa:hover{box-shadow:0 14px 34px rgba(18,140,126,.55);}
+@media(max-width:620px){.support-fab b{display:none;} .support-fab{padding:13px;border-radius:50%;}}
+
+.lp-reveal{opacity:0;transform:translateY(28px) scale(.98);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1);}
+.lp-reveal.in-view{opacity:1;transform:none;}
+
+/* ══ MOVIMENTO — parallax no hero + entrada escalonada dos grupos ══ */
+.hero{will-change:transform,opacity;}
+.nav{transition:background .25s ease,box-shadow .25s ease;}
+.nav.scrolled{background:rgba(4,4,9,.92);box-shadow:0 10px 30px rgba(0,0,0,.35);}
+
+.stagger>*{opacity:0;transform:translateY(22px);transition:opacity .55s cubic-bezier(.16,1,.3,1),transform .55s cubic-bezier(.16,1,.3,1);}
+.stagger.in-view>*{opacity:1;transform:none;}
+
+/* ══ MOVIMENTO REDUZIDO — modo calmo, não página congelada ══
+   O Windows liga esse modo sozinho em situações que nada têm a ver com
+   acessibilidade: economia de bateria, o preset "ajustar para melhor
+   desempenho" e o botão Efeitos de animação. Todo navegador do sistema lê a
+   mesma configuração — por isso o notebook ficava parado no Chrome E no Edge.
+   A versão anterior destas regras zerava TUDO e a landing virava um print.
+
+   Aqui a página continua viva em qualquer máquina; o que sai é só o que
+   realmente embrulha o estômago de quem pediu menos movimento: percurso
+   longo e movimento preso ao scroll. Bob de 5px, brilho e fade ficam.
+   O parallax do herói e o tour em vídeo automático saem no landing.js. */
+/* Ritmo quase igual ao normal (2,6s) — o que muda é só o percurso: 10px no
+   lugar de 12, 13px no lugar de 17. Devagar demais não lê como "calmo", lê
+   como travado, que foi o efeito da primeira tentativa a 4,4s. */
+@keyframes heroWaveCalm{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+@keyframes heroWaveCalmBig{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-13px) scale(1.04);}}
+@media(prefers-reduced-motion:reduce){
+  .lp-reveal{transform:none!important;transition:opacity .7s ease!important;}
+  .stagger>*{transform:none!important;transition:opacity .55s ease!important;}
+  /* A entrada das palavras fica inteira: é uma vez só, dura menos de um
+     segundo e acontece dentro da máscara, sem nada varrendo a tela. Cortá-la
+     tirava justamente o efeito que abre a página. Quem se cansa é o balanço
+     infinito — esse continua, com metade do percurso. */
+  .hero h1.words-in .word-bob{animation:heroWaveCalm 2.8s ease-in-out infinite;}
+  .hero h1.words-in .word-bob-hl{animation:heroWaveCalmBig 2.8s ease-in-out infinite;}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOTION — reel animado de funcionalidades dentro do mockup do hero
+   ══════════════════════════════════════════════════════════════ */
+.shot-body{height:400px;}
+.motion{position:absolute;inset:0;overflow:hidden;font-family:'Inter',sans-serif;
+  background:radial-gradient(ellipse 85% 75% at 50% -5%,rgba(99,102,241,.18),transparent 60%),
+             radial-gradient(ellipse 60% 50% at 90% 110%,rgba(20,184,166,.12),transparent 60%),#0a0a12;}
+.m-scene{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .55s ease;}
+.m-scene.active{opacity:1;pointer-events:auto;}
+
+/* legenda + progresso */
+.m-cap{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;gap:12px;
+  padding:12px 16px 13px;background:linear-gradient(0deg,rgba(6,6,12,.94),rgba(6,6,12,.5) 60%,transparent);}
+.m-cap-text{font-size:.78rem;font-weight:600;color:#ececff;letter-spacing:-.2px;transition:opacity .3s;}
+.m-dots{margin-left:auto;display:flex;gap:6px;}
+.m-dot{width:20px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);cursor:pointer;transition:background .3s;}
+.m-dot.on{background:linear-gradient(90deg,#6366f1,#14b8a6);}
+
+/* — Cena 1: notas — */
+.m-note{position:absolute;left:var(--x);top:var(--y);width:152px;border-radius:11px;
+  background:#15151f;border:1px solid rgba(255,255,255,.08);padding:11px 12px 12px 14px;
+  box-shadow:0 14px 34px rgba(0,0,0,.55);overflow:hidden;}
+.m-note .m-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
+.m-scene.active .m-note{animation:mPop .6s cubic-bezier(.34,1.3,.5,1) both;animation-delay:var(--d);}
+@keyframes mPop{0%{opacity:0;transform:translateY(22px) scale(.9)}100%{opacity:1;transform:none}}
+.m-chip{font-size:.55rem;font-weight:700;color:var(--c);margin-bottom:7px;}
+.m-title{font-size:.74rem;font-weight:600;color:#fff;line-height:1.32;margin-bottom:9px;}
+.m-check{display:flex;align-items:center;gap:7px;font-size:.64rem;color:rgba(255,255,255,.6);margin-top:5px;}
+.m-check .box{width:12px;height:12px;border-radius:4px;border:1.5px solid rgba(255,255,255,.3);position:relative;flex-shrink:0;transition:.2s;}
+.m-scene.active .m-check .box.on{animation:mCheck .35s cubic-bezier(.34,1.4,.5,1) 1.15s both;}
+.m-check .box.on::after{content:'✓';position:absolute;inset:-1px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;color:#04120b;opacity:0;}
+.m-scene.active .m-check .box.on::after{animation:mFadeIn .25s ease 1.35s both;}
+@keyframes mCheck{0%{border-color:rgba(255,255,255,.3);background:transparent}100%{border-color:#34d399;background:#34d399}}
+.m-pill{display:inline-block;font-size:.56rem;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);}
+.m-pill.done{background:rgba(16,185,129,.18);color:#6ee7b7;}
+.m-flip{position:relative;display:inline-block;}
+.m-flip .f1,.m-flip .f2{font-size:.56rem;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.m-flip .f1{display:inline-block;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);}
+.m-flip .f2{position:absolute;left:0;top:0;background:rgba(16,185,129,.18);color:#6ee7b7;opacity:0;}
+.m-scene.active .m-flip .f1{animation:mFadeOut .4s ease 1.7s both;}
+.m-scene.active .m-flip .f2{animation:mFadeIn .4s ease 1.7s both;}
+@keyframes mFadeOut{to{opacity:0}}
+@keyframes mFadeIn{from{opacity:0}to{opacity:1}}
+
+/* — Cena 2: chat — */
+.m-chat{position:absolute;left:9%;top:11%;right:9%;bottom:22%;background:#12121c;border:1px solid rgba(255,255,255,.08);
+  border-radius:15px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 18px 44px rgba(0,0,0,.55);}
+.m-chat-hd{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.07);}
+.m-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;flex-shrink:0;}
+.m-chat-name{font-size:.74rem;font-weight:600;color:#fff;}
+.m-online{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;}
+.m-msgs{flex:1;padding:15px;display:flex;flex-direction:column;gap:9px;justify-content:flex-end;}
+.m-bubble{max-width:74%;padding:8px 12px;font-size:.72rem;line-height:1.42;border-radius:14px;opacity:0;}
+.m-bubble.them{align-self:flex-start;background:rgba(255,255,255,.07);color:#e7e7ee;border-bottom-left-radius:4px;}
+.m-bubble.me{align-self:flex-end;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-bottom-right-radius:4px;}
+.m-scene.active .m-bubble.b1{animation:mBubble .5s cubic-bezier(.16,1,.3,1) .4s both;}
+.m-scene.active .m-bubble.b2{animation:mBubble .5s cubic-bezier(.16,1,.3,1) 1.15s both;}
+.m-scene.active .m-bubble.b3{animation:mBubble .5s cubic-bezier(.16,1,.3,1) 1.95s both;}
+@keyframes mBubble{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+
+/* — Cena 3: CRM — */
+.m-crm{position:absolute;inset:0;padding:22px 24px 0;}
+.m-tiles{display:flex;gap:10px;margin-bottom:18px;}
+.m-tile{flex:1;background:#12121c;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 13px;opacity:0;}
+.m-scene.active .m-tile{animation:mBubble .5s cubic-bezier(.16,1,.3,1) both;}
+.m-scene.active .m-tile:nth-child(2){animation-delay:.1s}
+.m-scene.active .m-tile:nth-child(3){animation-delay:.2s}
+.m-tile-lbl{font-size:.55rem;color:rgba(255,255,255,.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;}
+.m-tile-val{font-size:1.05rem;font-weight:800;font-family:'Syne',sans-serif;letter-spacing:-.5px;}
+.m-bars{display:flex;align-items:flex-end;gap:9px;height:104px;padding:0 2px;margin-bottom:10px;}
+.m-bar-c{flex:1;height:var(--h);border-radius:4px 4px 0 0;background:linear-gradient(180deg,#6366f1,#4f46e5);transform:scaleY(0);transform-origin:bottom;}
+.m-scene.active .m-bar-c{animation:mBar .8s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--bd);}
+@keyframes mBar{to{transform:scaleY(1)}}
+.m-crm-cap{font-size:.6rem;color:rgba(255,255,255,.4);text-align:center;}
+
+/* — Cena 4: videochamada — */
+.m-call{position:absolute;inset:0;padding:18px 18px 0;display:flex;flex-direction:column;}
+.m-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-bottom:12px;}
+.m-vtile{border-radius:12px;position:relative;display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;font-weight:800;color:rgba(255,255,255,.92);opacity:0;box-shadow:inset 0 0 40px rgba(0,0,0,.3);}
+.m-scene.active .m-vtile{animation:mPop .55s cubic-bezier(.34,1.3,.5,1) both;}
+.m-scene.active .m-vtile:nth-child(2){animation-delay:.1s}
+.m-scene.active .m-vtile:nth-child(3){animation-delay:.2s}
+.m-scene.active .m-vtile:nth-child(4){animation-delay:.3s}
+.m-scene.active .m-vtile.speaking{animation:mPop .55s cubic-bezier(.34,1.3,.5,1) both,mSpeak 1.5s ease-in-out 1s infinite;}
+@keyframes mSpeak{0%,100%{box-shadow:0 0 0 2px rgba(52,211,153,.55),inset 0 0 40px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 3px rgba(52,211,153,1),0 0 22px rgba(52,211,153,.5),inset 0 0 40px rgba(0,0,0,.3)}}
+.m-live{position:absolute;top:14px;left:18px;z-index:4;display:flex;align-items:center;gap:6px;font-size:.58rem;font-weight:700;color:#fff;background:rgba(239,68,68,.92);padding:3px 9px;border-radius:20px;letter-spacing:.5px;}
+.m-live i{width:6px;height:6px;border-radius:50%;background:#fff;animation:mBlink 1s steps(1) infinite;}
+@keyframes mBlink{50%{opacity:.15}}
+.m-controls{display:flex;justify-content:center;gap:10px;padding-bottom:14px;}
+.m-cbtn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+.m-cbtn.leave{background:#ef4444;}
+
+@media(max-width:560px){
+  .shot-body{height:340px;}
+  .m-note{width:132px;}
+  .m-tile-val{font-size:.92rem;}
+  .m-vtile{font-size:1.2rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  .m-scene{transition:none;}
+  .m-note,.m-bubble,.m-tile,.m-bar-c,.m-vtile,.m-check .box.on,.m-check .box.on::after,
+  .m-flip .f1,.m-flip .f2{animation:none!important;opacity:1!important;transform:none!important;}
+  .m-bar-c{transform:scaleY(1)!important;}
+  .m-flip .f2{opacity:0!important;}
+  .m-live i,.m-vtile.speaking{animation:none!important;}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HERO SHOWCASE — screenshot do app + quadros flutuantes animados
+   ══════════════════════════════════════════════════════════════ */
+.shot-body{height:auto;min-height:300px;}
+.hero-showcase{position:relative;max-width:820px;margin:0 auto;}
+.hero-showcase .shot{margin:0;}
+.float-card{position:absolute;z-index:3;background:rgba(20,20,31,.92);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;box-shadow:0 26px 54px rgba(0,0,0,.6);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);overflow:hidden;}
+.fc-chat{width:236px;left:-40px;bottom:-30px;animation:fcBobA 6.5s ease-in-out infinite;}
+.fc-crm{width:214px;right:-36px;top:-26px;animation:fcBobB 7.5s ease-in-out infinite;}
+@keyframes fcBobA{0%,100%{transform:translateY(0) rotate(-2.5deg)}50%{transform:translateY(-11px) rotate(-2.5deg)}}
+@keyframes fcBobB{0%,100%{transform:translateY(0) rotate(2.5deg)}50%{transform:translateY(-13px) rotate(2.5deg)}}
+.fc-hd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.07);}
+.fc-hd .t{font-size:.72rem;font-weight:600;color:#fff;}
+.fc-body{padding:12px 13px;}
+.fc-chat .m-msgs{min-height:104px;padding:0;justify-content:flex-end;flex:none;}
+.fc-b{max-width:82%;padding:7px 11px;font-size:.68rem;line-height:1.42;border-radius:12px;opacity:0;animation:fcBubble 6.5s ease-in-out infinite;}
+.fc-b.them{align-self:flex-start;background:rgba(255,255,255,.07);color:#e7e7ee;border-bottom-left-radius:4px;}
+.fc-b.me{align-self:flex-end;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-bottom-right-radius:4px;}
+.fc-b.d1{animation-delay:.3s}.fc-b.d2{animation-delay:1.2s}.fc-b.d3{animation-delay:2.1s}
+@keyframes fcBubble{0%{opacity:0;transform:translateY(8px) scale(.96)}9%,74%{opacity:1;transform:none}84%,100%{opacity:0;transform:translateY(-4px)}}
+.fc-crm .big{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.5px;color:#34d399;line-height:1;}
+.fc-mini-bars{display:flex;align-items:flex-end;gap:4px;height:34px;margin-top:12px;}
+.fc-mini-bars i{flex:1;border-radius:3px 3px 0 0;background:rgba(99,102,241,.5);transform-origin:bottom;animation:fcPulse 3.6s ease-in-out infinite;}
+.fc-mini-bars i:nth-child(1){height:40%}
+.fc-mini-bars i:nth-child(2){height:70%;animation-delay:.2s}
+.fc-mini-bars i:nth-child(3){height:100%;background:rgba(129,140,248,.95);animation-delay:.4s}
+.fc-mini-bars i:nth-child(4){height:55%;animation-delay:.6s}
+.fc-mini-bars i:nth-child(5){height:82%;animation-delay:.8s}
+@keyframes fcPulse{0%,100%{transform:scaleY(.82)}50%{transform:scaleY(1)}}
+@media(max-width:680px){
+  .fc-chat{width:186px;left:-12px;bottom:-16px;}
+  .fc-crm{width:170px;right:-10px;top:-14px;}
+  .fc-crm .big{font-size:1.15rem;}
+}
+@media(max-width:440px){
+  .fc-crm{display:none;}
+  .fc-chat{width:172px;left:auto;right:-6px;bottom:-12px;}
+}
+/* Modo calmo: o percurso da flutuação cai de ~12px para 4px e o ciclo
+   estica. As falas do chat e as barrinhas são fade e escala pequena —
+   ficam como estão. */
+@keyframes fcBobCalm{0%,100%{transform:translateY(0) rotate(-2.5deg);}50%{transform:translateY(-4px) rotate(-2.5deg);}}
+@keyframes fcBobCalmB{0%,100%{transform:translateY(0) rotate(2.5deg);}50%{transform:translateY(-4px) rotate(2.5deg);}}
+@media(prefers-reduced-motion:reduce){
+  .fc-chat{animation:fcBobCalm 10s ease-in-out infinite;}
+  .fc-crm{animation:fcBobCalmB 11s ease-in-out infinite;}
+}
+
+/* ══ MOTION LATERAL — quadros grandes e MUITO animados nas colunas vazias ══ */
+.side-card{position:absolute;z-index:1;width:256px;pointer-events:none;}
+.side-l1{left:1.4vw;top:164px;animation:sideFloatA 8s ease-in-out infinite;}
+.side-l2{left:2.6vw;top:474px;animation:sideFloatB 9s ease-in-out infinite;}
+.side-r1{right:1.4vw;top:150px;animation:sideFloatB 8.5s ease-in-out infinite;}
+.side-r2{right:2.6vw;top:456px;animation:sideFloatA 9.5s ease-in-out infinite;}
+@keyframes sideFloatA{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-22px) rotate(-2deg)}}
+@keyframes sideFloatB{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-24px) rotate(2deg)}}
+.side-card .fc-body{padding:15px 16px;}
+.side-card .m-title{font-size:.84rem;margin-bottom:8px;}
+.side-card .m-chip{font-size:.58rem;margin-bottom:8px;}
+
+/* L1 — barra de progresso + checklist ticando em sequência (loop 6s) */
+.side-prog{height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:2px 0 13px;overflow:hidden;}
+.side-prog span{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#6366f1,#14b8a6);width:8%;animation:sideProg 6s cubic-bezier(.5,0,.3,1) infinite;}
+@keyframes sideProg{0%{width:8%}28%{width:38%}56%{width:70%}84%,92%{width:100%}100%{width:8%}}
+.side-chk{width:16px;height:16px;border-radius:5px;border:1.7px solid rgba(255,255,255,.28);flex-shrink:0;background:transparent;}
+.side-chk.a{animation:tickA 6s ease infinite}
+.side-chk.b{animation:tickB 6s ease infinite}
+.side-chk.c{animation:tickC 6s ease infinite}
+@keyframes tickA{0%,14%{background:transparent;border-color:rgba(255,255,255,.28)}22%,92%{background:#34d399;border-color:#34d399}100%{background:transparent;border-color:rgba(255,255,255,.28)}}
+@keyframes tickB{0%,36%{background:transparent;border-color:rgba(255,255,255,.28)}44%,92%{background:#34d399;border-color:#34d399}100%{background:transparent;border-color:rgba(255,255,255,.28)}}
+@keyframes tickC{0%,58%{background:transparent;border-color:rgba(255,255,255,.28)}66%,92%{background:#34d399;border-color:#34d399}100%{background:transparent;border-color:rgba(255,255,255,.28)}}
+.side-card .m-check{font-size:.7rem;margin-top:8px;}
+
+/* L2 — videochamada: shimmer nas telas + waveform de áudio */
+.side-callhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+.side-live{display:inline-flex;align-items:center;gap:5px;font-size:.56rem;font-weight:700;color:#fff;background:rgba(239,68,68,.92);padding:3px 9px;border-radius:20px;letter-spacing:.5px;}
+.side-live i{width:5px;height:5px;border-radius:50%;background:#fff;animation:mBlink 1s steps(1) infinite;}
+.side-timer{font-size:.62rem;color:rgba(255,255,255,.45);font-family:'JetBrains Mono',monospace;}
+.side-vgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.side-vtile{height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:1.1rem;position:relative;overflow:hidden;box-shadow:inset 0 0 28px rgba(0,0,0,.3);}
+.side-vtile::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);transform:translateX(-130%);animation:sideShimmer 3.2s ease-in-out infinite;}
+.side-vtile:nth-child(2)::before{animation-delay:1.1s;}
+@keyframes sideShimmer{0%{transform:translateX(-130%)}55%,100%{transform:translateX(130%)}}
+.side-vtile.speaking{box-shadow:0 0 0 2px #34d399,inset 0 0 28px rgba(0,0,0,.3);animation:mSpeak 1.6s ease-in-out infinite;}
+.side-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:26px;margin-top:12px;}
+.side-wave i{width:3px;border-radius:2px;background:#6ee7b7;height:30%;animation:sideWave 1s ease-in-out infinite;}
+.side-wave i:nth-child(even){background:#34d399;}
+.side-wave i:nth-child(1){animation-delay:0s}.side-wave i:nth-child(2){animation-delay:.12s}.side-wave i:nth-child(3){animation-delay:.26s}.side-wave i:nth-child(4){animation-delay:.4s}.side-wave i:nth-child(5){animation-delay:.18s}.side-wave i:nth-child(6){animation-delay:.32s}.side-wave i:nth-child(7){animation-delay:.08s}.side-wave i:nth-child(8){animation-delay:.22s}.side-wave i:nth-child(9){animation-delay:.36s}
+@keyframes sideWave{0%,100%{height:16%}50%{height:100%}}
+
+/* R1 — feed de atividade do time deslizando + avatares */
+.side-avs{display:flex;align-items:center;margin-bottom:11px;}
+.side-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:#fff;border:2px solid #14141f;margin-left:-9px;}
+.side-av:first-child{margin-left:0;}
+.side-online{width:9px;height:9px;border-radius:50%;background:#34d399;box-shadow:0 0 9px #34d399;margin-left:11px;animation:sidePulse 1.8s ease-in-out infinite;}
+@keyframes sidePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.side-feed{position:relative;height:52px;overflow:hidden;}
+.side-feed .fi{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:6px;font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.4;opacity:0;}
+.side-feed .fi b{color:#a5b4fc;font-weight:600;}
+.side-feed .f1{animation:sideFeed 7.5s ease-in-out infinite;}
+.side-feed .f2{animation:sideFeed 7.5s ease-in-out infinite;animation-delay:2.5s;}
+.side-feed .f3{animation:sideFeed 7.5s ease-in-out infinite;animation-delay:5s;}
+@keyframes sideFeed{0%{opacity:0;transform:translateY(22px)}5%,26%{opacity:1;transform:translateY(0)}33%,100%{opacity:0;transform:translateY(-18px)}}
+
+/* R2 — CRM: barras "ao vivo" pulsando */
+.side-crm-lbl{font-size:.6rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.side-crm-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;color:#34d399;letter-spacing:-.5px;line-height:1;}
+.side-bars2{display:flex;align-items:flex-end;gap:5px;height:46px;margin-top:14px;}
+.side-bars2 i{flex:1;border-radius:3px 3px 0 0;background:rgba(99,102,241,.55);transform-origin:bottom;height:100%;animation:sideLiveBar 2.4s ease-in-out infinite;}
+.side-bars2 i:nth-child(1){animation-delay:0s}
+.side-bars2 i:nth-child(2){animation-delay:.25s}
+.side-bars2 i:nth-child(3){background:rgba(129,140,248,.95);animation-delay:.5s}
+.side-bars2 i:nth-child(4){animation-delay:.75s}
+.side-bars2 i:nth-child(5){animation-delay:1s}
+.side-bars2 i:nth-child(6){animation-delay:1.25s}
+@keyframes sideLiveBar{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+
+@media(max-width:1280px){.side-card{display:none;}}
+/* Modo calmo: os painéis laterais sobem 22px por ciclo, que é o percurso mais
+   longo da página — cai para 6px e o ciclo dobra. O conteúdo de dentro
+   (barras, ondas, feed) é pequeno e continua rodando. */
+@keyframes sideFloatCalmA{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-6px) rotate(-2deg);}}
+@keyframes sideFloatCalmB{0%,100%{transform:translateY(0) rotate(2deg);}50%{transform:translateY(-6px) rotate(2deg);}}
+@media(prefers-reduced-motion:reduce){
+  /* O par de cada keyframe segue a inclinação do card, não o lado da tela. */
+  .side-l1,.side-r2{animation:sideFloatCalmA 16s ease-in-out infinite;}
+  .side-l2,.side-r1{animation:sideFloatCalmB 18s ease-in-out infinite;}
+}
+</style>
+</head>
+<body data-i18n-static>
+
+<div class="hero-wrap">
+  <canvas class="hero-particles" id="hero-particles" aria-hidden="true"></canvas>
+  <div class="hero-fade"></div>
+
+  <nav class="nav">
+    <div class="nav-logo"><img src="img/logo-mydesk.png?v=3" alt="MyDesk" class="brand-logo"></div>
+    <div class="nav-links">
+      <a href="#recursos">Recursos</a>
+      <a href="#precos">Preços</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-spacer"></div>
+    <div data-language-selector></div>
+    <button class="nav-signin" data-h="l1" data-track="cta_click" data-track-props='{"local":"nav_entrar"}'>Entrar</button>
+    <button class="nav-cta" data-h="l2" data-track="cta_click" data-track-props='{"local":"nav_criar_conta"}'>Criar conta grátis</button>
+  </nav>
+
+  <div class="hero">
+    <!-- ═══════════════════════════════════════════════════════════════
+         O LOGO ANIMADO TEM FUNDO TRANSPARENTE DE VERDADE
+         Primeira tentativa foi `mix-blend-mode: screen` sobre o vídeo com
+         fundo preto. Não funcionou, e a razão é estrutural: `.hero` tem
+         `position:relative` + `z-index`, o que cria um contexto de
+         empilhamento próprio — e mistura só acontece DENTRO do contexto.
+         O vídeo passava a se misturar com o nada, e o retângulo escuro
+         aparecia inteiro sobre o degradê da página.
+
+         Agora o alfa é do arquivo. O canal de transparência foi gerado a
+         partir do próprio brilho (alfa = canal mais forte de cada pixel):
+         num neon sobre preto isso dá uma máscara perfeita, com a aura
+         desvanecendo suavemente em vez da serrilha que um recorte de 1 bit
+         produziria.
+
+         VP9 com alfa, em WebM: 270 KB contra os 2,9 MB do GIF original.
+         Animação em WebP com alfa também foi testada e deu 2 MB — o
+         formato não comprime bem entre quadros.
+
+         O `<img>` estático é o PADRÃO e fica no HTML: nenhum navegador
+         mostra caixa preta, nada pisca antes da hora, e não há salto de
+         layout. O vídeo entra por cima, pelo JS, só onde há suporte a alfa
+         em VP9 — o WebKit (Safari, e todo navegador no iPhone) toca o
+         arquivo mas IGNORA a transparência, e ali a caixa voltaria.
+         ═══════════════════════════════════════════════════════════════ -->
+    <img src="img/logo-mydesk.png?v=3" alt="MyDesk" class="hero-logo" id="hero-logo">
+    <div class="eyebrow"><span class="dot"></span>Workspace corporativo</div>
+    <h1><span class="word-bob"><span class="word-mask"><span class="word-in">Onde</span></span></span> <span class="word-bob"><span class="word-mask"><span class="word-in">suas</span></span></span> <span class="word-bob"><span class="word-mask"><span class="word-in">notas</span></span></span><br><span class="word-bob"><span class="word-mask"><span class="word-in">e</span></span></span> <span class="word-bob"><span class="word-mask"><span class="word-in">seu</span></span></span> <span class="word-bob"><span class="word-mask"><span class="word-in">time</span></span></span> <span class="word-bob word-bob-hl"><span class="word-mask"><span class="word-in"><span class="hl">pensam</span></span></span></span> <span class="word-bob"><span class="word-mask"><span class="word-in">juntos.</span></span></span></h1>
+    <p>Capture ideias, organize clientes e nunca mais perca um prazo — um workspace completo pra você e sua equipe.</p>
+    <div class="hero-ctas">
+      <button class="btn-fill" data-h="l3" data-track="cta_click" data-track-props='{"local":"hero"}'>Criar conta grátis</button>
+      <button class="btn-outline" type="button" id="ver-tour">&#9654; Ver o tour de 50s</button>
+    </div>
+    <div class="hero-microcopy"><b style="color:var(--accent-light);">7 dias com tudo liberado</b> · sem cartão de crédito · pronto em menos de 1 minuto
+      <br><button type="button" class="hero-link" data-h="l4" data-track="cta_click" data-track-props='{"local":"hero_recursos"}'>Ver todos os recursos</button>
+    </div>
+
+    <div class="hero-showcase">
+      <div class="shot">
+        <div class="shot-bar">
+          <div class="shot-dot" style="background:#ef4444"></div>
+          <div class="shot-dot" style="background:#f59e0b"></div>
+          <div class="shot-dot" style="background:#10b981"></div>
+          <span class="shot-tag">app.mydesk</span>
+        </div>
+        <div class="shot-body">
+          <img class="shot-img" src="screenshots/hero-app.jpg" width="1600" height="808" data-i18n-alt="landing.heroAlt" alt="MyDesk em uso: board de notas com fundo personalizado, barra de ferramentas e chats abertos" loading="eager" fetchpriority="high">
+        </div>
+      </div>
+
+      <!-- Quadro flutuante 1 — chat / colaboração ao vivo -->
+      <div class="float-card fc-chat" aria-hidden="true">
+        <div class="fc-hd">
+          <div class="m-av" style="background:linear-gradient(135deg,#f59e0b,#d97706)">C</div>
+          <span class="t">@clair</span>
+          <span class="m-online" style="margin-left:auto"></span>
+        </div>
+        <div class="fc-body">
+          <div class="m-msgs">
+            <div class="fc-b them d1">Cria um workspace comigo?</div>
+            <div class="fc-b me d2">Claro! Mandei o convite 🎉</div>
+            <div class="fc-b them d3">Entrei! Já tô vendo tudo ✨</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quadro flutuante 2 — CRM financeiro -->
+      <div class="float-card fc-crm" aria-hidden="true">
+        <div class="fc-body">
+          <div style="font-size:.6rem;color:rgba(255,255,255,.42);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;">Recebido este mês</div>
+          <div class="big">R$ 3.100 <span style="font-size:.85rem;">✓</span></div>
+          <div class="fc-mini-bars"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOTION LATERAL — quadros grandes e animados nas colunas laterais (telas largas) -->
+  <div class="float-card side-card side-l1" aria-hidden="true">
+    <span class="m-bar" style="background:#6366f1"></span>
+    <div class="fc-body">
+      <div class="m-chip" style="--c:#a5b4fc">● Índigo · em andamento</div>
+      <div class="m-title">Planejar sprint</div>
+      <div class="side-prog"><span></span></div>
+      <div class="m-check"><span class="side-chk a"></span>Backlog priorizado</div>
+      <div class="m-check"><span class="side-chk b"></span>Estimativas do time</div>
+      <div class="m-check"><span class="side-chk c"></span>Kickoff agendado</div>
+    </div>
+  </div>
+
+  <div class="float-card side-card side-l2" aria-hidden="true">
+    <div class="fc-body">
+      <div class="side-callhd">
+        <span class="side-live"><i></i> AO VIVO</span>
+        <span class="side-timer">04:12</span>
+      </div>
+      <div class="side-vgrid">
+        <div class="side-vtile speaking" style="background:linear-gradient(135deg,#4f46e5,#6366f1)">V</div>
+        <div class="side-vtile" style="background:linear-gradient(135deg,#0d9488,#14b8a6)">C</div>
+      </div>
+      <div class="side-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+
+  <div class="float-card side-card side-r1" aria-hidden="true">
+    <div class="fc-hd">
+      <span class="m-av" style="width:24px;height:24px;font-size:.72rem;background:linear-gradient(135deg,#6366f1,#4f46e5)">👥</span>
+      <span class="t">Workspace do time</span>
+    </div>
+    <div class="fc-body">
+      <div class="side-avs">
+        <span class="side-av" style="background:linear-gradient(135deg,#f59e0b,#d97706)">C</span>
+        <span class="side-av" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">V</span>
+        <span class="side-av" style="background:linear-gradient(135deg,#0d9488,#14b8a6)">M</span>
+        <span class="side-online"></span>
+      </div>
+      <div class="side-feed">
+        <div class="fi f1"><b>@carlos</b> moveu uma nota →</div>
+        <div class="fi f2"><b>@você</b> criou “Sprint 12” ✨</div>
+        <div class="fi f3"><b>@mateus</b> comentou 💬</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="float-card side-card side-r2" aria-hidden="true">
+    <div class="fc-body">
+      <div class="side-crm-lbl">Recebido este mês</div>
+      <div class="side-crm-val">R$ 3.100</div>
+      <div class="side-bars2"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CATÁLOGO COMPLETO DE RECURSOS ══ -->
+<div class="section lp-reveal" id="recursos">
+  <div class="section-head">
+    <div class="eyebrow"><span class="dot"></span>Recursos</div>
+    <h2>Tudo que o MyDesk faz,<br><span class="hl">em um só lugar.</span></h2>
+    <p>Quatro pilares, sem dez ferramentas diferentes.</p>
+  </div>
+
+  <div class="pillars stagger">
+    <div class="pillar">
+      <div class="ic">🗂️</div>
+      <h3>Notas que se organizam sozinhas</h3>
+      <p>Cada nota é um card livre: arraste, redimensione e escolha entre 19 paletas de cor. Empilhe notas relacionadas arrastando uma sobre a outra, defina prazos com lembretes automáticos e, quando o board bagunçar, um botão realinha tudo em grid.</p>
+      <div class="pillar-preview" style="padding:14px;display:flex;gap:8px;">
+        <div style="flex:1;background:#0f1029;border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:9px 10px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;"><span style="width:6px;height:6px;border-radius:50%;background:#6366f1;"></span><span style="font-size:.62rem;color:#a5b4fc;">Indigo</span></div>
+          <div style="font-size:.72rem;font-weight:600;color:#fff;">Redesign do dashboard</div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.35);margin-top:4px;">Prazo: 15/07</div>
+        </div>
+        <div style="flex:1;background:#071a10;border:1px solid rgba(16,185,129,.25);border-radius:8px;padding:9px 10px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;"><span style="width:6px;height:6px;border-radius:50%;background:#10b981;"></span><span style="font-size:.62rem;color:#6ee7b7;">Concluído</span></div>
+          <div style="font-size:.72rem;font-weight:600;color:#fff;">Reunião com cliente</div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.35);margin-top:4px;">Prazo: 18/07</div>
+        </div>
+      </div>
+      <div class="pillar-tags"><span>Pilhas inteligentes</span><span>Reorganizar com 1 clique</span><span>Arquivos anexados</span></div>
+    </div>
+
+    <div class="pillar">
+      <div class="ic" style="background:rgba(20,184,166,.14);">💬</div>
+      <h3>Colabore em tempo real</h3>
+      <p>Adicione qualquer pessoa pelo @usuário e converse por chat com texto, imagem e arquivos — mensagens chegam mesmo se ela estava offline. Quando precisar, inicie uma videochamada 1:1 ou em grupo, com tela compartilhada.</p>
+      <div class="pillar-preview" style="padding:13px 14px;display:flex;flex-direction:column;gap:7px;">
+        <div style="align-self:flex-start;background:rgba(255,255,255,.07);border-radius:12px 12px 12px 3px;padding:7px 12px;font-size:.72rem;color:rgba(255,255,255,.82);max-width:78%;">Cria um workspace comigo?</div>
+        <div style="align-self:flex-end;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:12px 12px 3px 12px;padding:7px 12px;font-size:.72rem;color:#fff;max-width:78%;">Claro! Manda o convite 🎉</div>
+      </div>
+      <div class="pillar-tags"><span>Chat flutuante</span><span>Vídeo + tela compartilhada</span></div>
+    </div>
+
+    <div class="pillar">
+      <div class="ic" style="background:rgba(245,158,11,.14);">💰</div>
+      <h3>CRM financeiro embutido</h3>
+      <p>Cadastre clientes e acompanhe recebíveis num painel só: total esperado, recebido, pendente e atrasado, com gráficos que atualizam sozinhos. Sem precisar de uma planilha ou ferramenta separada. <span class="pillar-note">Plano Premium.</span></p>
+      <div class="pillar-preview" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+          <div><div style="font-size:.6rem;color:rgba(255,255,255,.35);">Esperado</div><div style="font-size:.85rem;font-weight:700;color:#fff;">R$ 4.200</div></div>
+          <div><div style="font-size:.6rem;color:rgba(255,255,255,.35);">Recebido</div><div style="font-size:.85rem;font-weight:700;color:#34d399;">R$ 3.100</div></div>
+          <div><div style="font-size:.6rem;color:rgba(255,255,255,.35);">Pendente</div><div style="font-size:.85rem;font-weight:700;color:#fbbf24;">R$ 1.100</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:32px;">
+          <div style="flex:1;background:rgba(99,102,241,.45);height:55%;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;background:rgba(99,102,241,.45);height:82%;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;background:rgba(99,102,241,.9);height:100%;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;background:rgba(99,102,241,.45);height:40%;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;background:rgba(99,102,241,.45);height:68%;border-radius:2px 2px 0 0;"></div>
+        </div>
+      </div>
+      <div class="pillar-tags"><span>Dashboard ao vivo</span><span>Busca de clientes</span></div>
+    </div>
+
+    <div class="pillar">
+      <div class="ic" style="background:rgba(239,68,68,.14);">🔒</div>
+      <h3>Seu ambiente, protegido</h3>
+      <p>Personalize o fundo do seu board com cores, gradientes ou vídeo em loop, e sincronize prazos com Google Agenda, Outlook ou um arquivo .ics. Por trás, cada conta tem seus dados isolados no Firebase, com upload de arquivos validado por tipo.</p>
+      <div class="pillar-preview" style="padding:14px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;gap:6px;">
+          <div style="width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#6366f1,#4f46e5);"></div>
+          <div style="width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#14b8a6,#0d9488);"></div>
+          <div style="width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#f59e0b,#d97706);"></div>
+          <div style="width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#1a1a2e,#0d0d0d);border:1px solid rgba(255,255,255,.15);"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.68rem;color:rgba(255,255,255,.5);"><span style="color:#34d399;">🔒</span>Firebase Auth</div>
+      </div>
+      <div class="pillar-tags"><span>Autenticação Firebase</span><span>Fundo personalizado</span><span>Integração de calendário</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ PESSOAL x GRUPO ══ -->
+<div class="section lp-reveal">
+  <div class="section-head">
+    <div class="eyebrow"><span class="dot"></span>Dois modos, um só board</div>
+    <h2>Sozinho ou em equipe.<br><span class="hl">Você escolhe.</span></h2>
+    <p>O mesmo board por trás — só muda quem enxerga.</p>
+  </div>
+  <div class="split">
+    <div class="split-card">
+      <div class="ic">🧍</div>
+      <h3>Workspace pessoal</h3>
+      <p>Múltiplos boards privados por padrão. Ninguém vê, a não ser que você compartilhe.</p>
+      <div class="split-list">
+        <div><i></i>Notas privadas por padrão</div>
+        <div><i></i>Fundo e cores por conta</div>
+        <div><i></i>CRM financeiro pessoal</div>
+      </div>
+    </div>
+    <div class="split-card">
+      <div class="ic" style="background:rgba(20,184,166,.14);">👥</div>
+      <h3>Workspace de grupo</h3>
+      <p>Convide por @usuário. Todo mundo vê exatamente o mesmo board, ao vivo.</p>
+      <div class="split-list">
+        <div><i></i>Sincronização em tempo real</div>
+        <div><i></i>Chat embutido no workspace</div>
+        <div><i></i>CRM de grupo (Premium)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ COMO FUNCIONA ══ -->
+<div class="section lp-reveal">
+  <div class="section-head">
+    <div class="eyebrow"><span class="dot"></span>Como funciona</div>
+    <h2>Do zero ao organizado<br><span class="hl">em quatro passos.</span></h2>
+    <p>Sem curva de aprendizado — comece a usar em minutos.</p>
+  </div>
+  <div class="steps stagger">
+    <div class="step"><div class="step-num">1</div><h4>Crie uma nota</h4><p>Título, descrição e uma cor entre 19 paletas.</p></div>
+    <div class="step"><div class="step-num">2</div><h4>Defina prazos</h4><p>Datas de início e vencimento com lembretes.</p></div>
+    <div class="step"><div class="step-num">3</div><h4>Acompanhe o status</h4><p>Um clique muda entre A fazer, Andamento, Concluído.</p></div>
+    <div class="step"><div class="step-num">4</div><h4>Reorganize</h4><p>Um botão alinha tudo em grid, sem sobreposição.</p></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ INTEGRAÇÕES ══ -->
+<div class="section lp-reveal" style="text-align:center;">
+  <div class="eyebrow" style="justify-content:center;"><span class="dot"></span>Integrações</div>
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,3.4vw,2.4rem);letter-spacing:-1px;margin:14px 0;">Não substitua. Integre.</h2>
+  <p style="font-size:.9rem;color:var(--text-dim);max-width:480px;margin:0 auto;line-height:1.7;">O MyDesk se conecta ao que você já usa no dia a dia.</p>
+  <div class="int-grid stagger">
+    <div class="int-icon">🔥<span>Firebase</span></div>
+    <div class="int-icon">🟦<span>Google Auth</span></div>
+    <div class="int-icon">📅<span>Google Calendar</span></div>
+    <div class="int-icon">Ⓜ️<span>Outlook</span></div>
+    <div class="int-icon">💳<span>Stripe</span></div>
+    <div class="int-icon">🗓️<span>.ics Calendar</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ FAQ ══ -->
+<div class="section lp-reveal" id="faq">
+  <div class="section-head">
+    <div class="eyebrow"><span class="dot"></span>Dúvidas frequentes</div>
+    <h2>Perguntas<br><span class="hl">&amp; Respostas.</span></h2>
+  </div>
+  <div style="max-width:680px;margin:0 auto;" class="stagger">
+    <div class="faq-item" data-h="l5">
+      <div class="faq-q"><span>Meus dados ficam salvos se eu fechar o navegador?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Sim. As notas são salvas na nuvem em tempo real. Ao voltar, tudo estará como você deixou, em qualquer dispositivo.</div></div>
+    </div>
+    <div class="faq-item" data-h="l6">
+      <div class="faq-q"><span>Posso usar em vários dispositivos ao mesmo tempo?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Sim. Faça login com a mesma conta em qualquer navegador. As notas sincronizam automaticamente.</div></div>
+    </div>
+    <div class="faq-item" data-h="l7">
+      <div class="faq-q"><span>Como funcionam os workspaces compartilhados?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Você pode criar um workspace 1:1 com um amigo ou um workspace de grupo. As notas sincronizam em tempo real para todos.</div></div>
+    </div>
+    <div class="faq-item" data-h="l8">
+      <div class="faq-q"><span>É possível anexar arquivos nas notas?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Sim. Cada nota aceita imagens, PDFs e outros arquivos até 5MB, com visualizador embutido.</div></div>
+    </div>
+    <div class="faq-item" data-h="l9">
+      <div class="faq-q"><span>O MyDesk funciona offline?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Parcialmente. O board carrega normalmente, mas sincronização, chat e chamadas precisam de internet.</div></div>
+    </div>
+    <div class="faq-item" data-h="l10">
+      <div class="faq-q"><span>Como funciona a renovação e o cancelamento?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>O Premium é uma assinatura recorrente mensal ou anual processada pela Stripe. A renovação acontece automaticamente no fim de cada período. Você pode atualizar a forma de pagamento, consultar cobranças ou cancelar a renovação a qualquer momento pelo Portal do Cliente.</div></div>
+    </div>
+    <div class="faq-item" data-h="l11">
+      <div class="faq-q"><span>O que acontece com minhas notas se eu parar de pagar?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Nada é apagado. Você continua vendo e editando tudo que já criou — o que volta a valer são os limites do plano gratuito para criar coisas novas e os recursos exclusivos do Premium ficam indisponíveis até um novo pagamento.</div></div>
+    </div>
+    <div class="faq-item" data-h="l12">
+      <div class="faq-q"><span>E se eu me arrepender depois de pagar?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Você tem 7 dias para desistir e receber o valor de volta integralmente, como manda o Código de Defesa do Consumidor. É só mandar um e-mail com o endereço da sua conta.</div></div>
+    </div>
+    <div class="faq-item" data-h="l13">
+      <div class="faq-q"><span>Quem consegue ver minhas notas?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Só você e as pessoas com quem você compartilhou um workspace. As regras do banco de dados restringem cada conta aos seus próprios dados, o tráfego é criptografado e seu conteúdo não é usado para treinar modelos nem vendido a terceiros. Detalhes na <a href="privacidade.html" style="color:var(--accent-light);">Política de Privacidade</a>.</div></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span>Como funcionam os 7 dias de teste?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Toda conta nova nasce com 7 dias de acesso completo: notas ilimitadas, CRM Financeiro e workspaces de grupo, sem pedir cartão. Terminado o prazo, esses recursos voltam a ser exclusivos do Premium e a criação de notas volta ao limite do plano gratuito — nada do que você criou é apagado.</div></div>
+    </div>
+    <div class="faq-item" data-h="l14">
+      <div class="faq-q"><span>Preciso de cartão de crédito para começar?</span><span class="faq-arrow">▾</span></div>
+      <div class="faq-a"><div>Não. O plano gratuito e os 7 dias iniciais não pedem cartão. Os dados de pagamento do Premium são coletados e armazenados diretamente pela Stripe; o MyDesk não recebe o número completo do cartão.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     DEPOIMENTOS — seção pronta, propositalmente desligada.
+
+     Não coloquei depoimento inventado aqui: prova social falsa é
+     propaganda enganosa e, se alguém descobrir, custa mais confiança do
+     que a seção traz. Assim que tiver 2 ou 3 frases REAIS de gente que
+     usa o MyDesk (peça por WhatsApp — costuma vir em minutos):
+
+       1. apague esta linha de abertura do comentário e a de fechamento;
+       2. troque texto, nome e a descrição de cada pessoa;
+       3. peça autorização para usar o nome — basta um "posso publicar?".
+
+     Coloque nomes reais e, se possível, a atividade ("designer freelancer",
+     "dono de barbearia"): depoimento genérico e sem rosto convence pouco.
+══════════════════════════════════════════════════════════════════ -->
+<!--
+<div class="divider"></div>
+
+<div class="section lp-reveal" id="depoimentos">
+  <div class="section-head">
+    <div class="eyebrow"><span class="dot"></span>Quem usa</div>
+    <h2>Não é só a gente<br><span class="hl">que acha bom.</span></h2>
+  </div>
+  <div class="quotes stagger">
+    <div class="quote">
+      <p>"FRASE REAL DA PESSOA AQUI."</p>
+      <div class="quote-who"><b>Nome da pessoa</b><span>o que ela faz</span></div>
+    </div>
+    <div class="quote">
+      <p>"FRASE REAL DA PESSOA AQUI."</p>
+      <div class="quote-who"><b>Nome da pessoa</b><span>o que ela faz</span></div>
+    </div>
+    <div class="quote">
+      <p>"FRASE REAL DA PESSOA AQUI."</p>
+      <div class="quote-who"><b>Nome da pessoa</b><span>o que ela faz</span></div>
+    </div>
+  </div>
+</div>
+-->
+
+<!-- ══ PRICING ══ -->
+<div class="section lp-reveal" id="precos">
+  <div class="section-head">
+    <div class="eyebrow"><span class="dot"></span>Planos</div>
+    <h2>Simples e <span class="hl">transparente.</span></h2>
+    <p>Toda conta nova começa com <b style="color:var(--accent-light);">7 dias de acesso completo</b>, sem pedir cartão. Depois disso você escolhe: seguir no plano gratuito ou assinar.</p>
+  </div>
+  <div class="plans stagger">
+    <div class="plan">
+      <div class="plan-eyebrow">Gratuito</div>
+      <div class="plan-price">R$ 0</div>
+      <div class="plan-period">para sempre · com 7 dias de tudo liberado no começo</div>
+      <div class="plan-feats">
+        <div><span class="ck">✓</span>15 notas por mês</div>
+        <div><span class="ck">✓</span>Workspaces pessoais</div>
+        <div><span class="ck">✓</span>Chat e chamada de vídeo (at&eacute; 2)</div>
+        <div><span class="ck">✓</span>19 cores de notas</div>
+        <div><span class="ck">✓</span>Anexos de 5 MB &middot; 50 MB no total</div>
+        <div><span class="ck">✓</span>Calend&aacute;rio e agenda pessoal</div>
+        <div><span class="ck">✓</span>Leitura de .docx e PDF nos anexos</div>
+        <div class="off"><span>✗</span>CRM Financeiro</div>
+        <div class="off"><span>✗</span>Workspaces de grupo</div>
+        <div class="off"><span>✗</span>Recibo em PDF assinado</div>
+        <div class="off"><span>✗</span>Relat&oacute;rio financeiro em PDF</div>
+        <div class="off"><span>✗</span>Resumo de documento por IA</div>
+        <div class="off"><span>✗</span>Fundos em v&iacute;deo e animados</div>
+        <div class="off"><span>✗</span>Lembretes por e-mail</div>
+        <div class="off"><span>✗</span>Suporte priorit&aacute;rio</div>
+      </div>
+      <button class="plan-btn" data-h="l15" data-track="cta_click" data-track-props='{"local":"plano_gratuito"}'>Começar grátis</button>
+    </div>
+    <div class="plan premium">
+      <div class="plan-badge">Mais popular</div>
+      <div class="plan-eyebrow">Premium mensal</div>
+      <div class="plan-price">R$ 19,99</div>
+      <div class="plan-period">por mês · renovação automática</div>
+      <div class="plan-feats">
+        <div><span class="ck">✓</span><b>Notas ilimitadas</b></div>
+        <div><span class="ck">✓</span>Workspaces pessoais ilimitados</div>
+        <div><span class="ck">✓</span>Chamada de v&iacute;deo com at&eacute; 6</div>
+        <div><span class="ck">✓</span>19 cores <b>+ gradientes</b></div>
+        <div><span class="ck">✓</span><b>Anexos de 5 MB &middot; 1 GB no total</b></div>
+        <div><span class="ck">✓</span><b>CRM Financeiro completo</b></div>
+        <div><span class="ck">✓</span><b>Workspaces de grupo</b></div>
+        <div><span class="ck">✓</span><b>Recibo em PDF com sua assinatura</b></div>
+        <div><span class="ck">✓</span><b>Relat&oacute;rio financeiro em PDF</b></div>
+        <div><span class="ck">✓</span><b>Resumo de documento por IA</b></div>
+        <div><span class="ck">✓</span>Lembretes por e-mail</div>
+        <div><span class="ck">✓</span>Fundos em v&iacute;deo <b>e 5 cenas animadas</b></div>
+        <div><span class="ck">✓</span>Suporte priorit&aacute;rio</div>
+      </div>
+      <button class="plan-btn premium" data-h="l16" data-track="cta_click" data-track-props='{"local":"plano_premium"}'>Assinar Premium</button>
+    </div>
+    <div class="plan premium plan-anual">
+      <div class="plan-badge badge-anual">Melhor valor</div>
+      <div class="plan-eyebrow">Premium anual</div>
+      <div class="plan-price">R$ 199,99</div>
+      <div class="plan-period">por ano · renovação automática · equivale a R$ 16,67/m&ecirc;s</div>
+      <div class="plan-feats">
+        <div><span class="ck">✓</span><b>Tudo do Premium mensal</b></div>
+        <div><span class="ck">✓</span><b>Economize R$ 40 no ano</b></div>
+        <div><span class="ck">✓</span>Equivale a 2 meses de gra&ccedil;a</div>
+        <div><span class="ck">✓</span>Uma cobran&ccedil;a por ano, n&atilde;o doze</div>
+        <div><span class="ck">✓</span>Renova&ccedil;&atilde;o anual autom&aacute;tica</div>
+      </div>
+      <button class="plan-btn premium" data-h="l17" data-track="cta_click" data-track-props='{"local":"plano_anual"}'>Assinar plano anual</button>
+    </div>
+  </div>
+  <div class="plan-note"><span data-i18n="landing.billingLead">R$ 19,99 por mês ou R$ 199,99 por ano. Assinatura recorrente processada pela Stripe,</span>
+    <span data-i18n="landing.billingPortal">com gerenciamento e cancelamento pelo Portal do Cliente.</span><br>
+    <span data-i18n="landing.noCommitment">Sem fidelidade · cancele quando quiser · 7 dias para desistir e receber o valor de volta</span></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ NOVIDADES POR E-MAIL — recupera quem não vai criar conta hoje ══ -->
+<div class="section lp-reveal" id="novidades" style="padding-top:70px;padding-bottom:70px;">
+  <div class="news-box">
+    <div class="news-text">
+      <h3>Ainda não é a hora?</h3>
+      <p><span data-i18n="landing.newsletterLead">Deixe seu e-mail e a gente avisa quando sair novidade no MyDesk. Sem spam, sem repasse a</span>
+         <span data-i18n="landing.newsletterTail">terceiros, e você sai da lista quando quiser.</span></p>
+    </div>
+    <form class="news-form" id="news-form" novalidate>
+      <input type="email" id="news-email" placeholder="seu@email.com" autocomplete="email" required aria-label="Seu e-mail">
+      <!-- honeypot: invisível para gente, irresistível para robô -->
+      <input type="text" id="news-hp" class="news-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button type="submit" data-track="newsletter_submit">Quero receber</button>
+    </form>
+  </div>
+  <div class="news-msg" id="news-msg" role="status"></div>
+</div>
+
+<!-- ══ CTA FINAL ══ -->
+<div class="cta">
+  <div class="eyebrow" style="justify-content:center;margin-bottom:18px;"><span class="dot"></span>Comece agora</div>
+  <h2>Comece grátis.<br><span class="hl">Evolua quando quiser.</span></h2>
+  <p>Nenhum cartão de crédito necessário. Seus dados ficam sincronizados com segurança na nuvem.</p>
+  <button class="btn-fill" data-h="l17" data-track="cta_click" data-track-props='{"local":"cta_final"}'>Criar minha conta grátis</button>
+  <div class="cta-trust">
+    <span>✓ Plano gratuito para sempre</span>
+    <span>✓ Sem cartão de crédito</span>
+    <span>✓ Sem cobrança recorrente</span>
+    <span>✓ Funciona em qualquer dispositivo</span>
+    <span>✓ 7 dias para desistir</span>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand-name"><img src="img/logo-mydesk.png?v=3" alt="MyDesk" class="brand-logo"></div>
+      <div class="footer-brand-desc">Workspace de notas, CRM financeiro e colaboração em tempo real — tudo em um único lugar.</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Produto</div>
+      <a data-h="l18">Recursos</a>
+      <a data-h="l19">Preços</a>
+      <a data-h="l20">Perguntas frequentes</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Conta</div>
+      <a data-h="l21">Entrar</a>
+      <a data-h="l22">Criar conta</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Legal &amp; Suporte</div>
+      <a href="privacidade.html">Política de Privacidade</a>
+      <a href="termos.html">Termos de Uso</a>
+      <a href="mailto:mydesksocial@hotmail.com" data-track="suporte_click">Falar com a gente</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Integrações</div>
+      <span style="display:block;font-size:.79rem;color:var(--text-faint);margin-bottom:9px;">Firebase · Google</span>
+      <span style="display:block;font-size:.79rem;color:var(--text-faint);">Outlook · Stripe Billing</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 MyDesk · <a href="privacidade.html" style="color:inherit;">Privacidade</a> · <a href="termos.html" style="color:inherit;">Termos</a></span>
+    <span>Feito com 💜 para equipes e freelancers.</span>
+  </div>
+</div>
+
+<!-- TOUR EM VÍDEO — some por padrão; landing.js decide quando mostrar -->
+<div class="tour-fundo" id="tour-fundo" hidden></div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-topo">
+    <span class="tour-titulo">Tour do MyDesk &middot; 50s</span>
+    <button type="button" class="tour-btn" id="tour-som" title="Ativar som" aria-label="Ativar som">&#128263;</button>
+    <button type="button" class="tour-btn" id="tour-ampliar" title="Ampliar" aria-label="Ampliar">&#10530;</button>
+    <button type="button" class="tour-btn" id="tour-fechar" title="Fechar" aria-label="Fechar">&times;</button>
+  </div>
+  <video class="tour-video" id="tour-video" poster="media/tour-poster.jpg" playsinline muted preload="none">
+    <source src="media/tour.mp4" type="video/mp4">
+  </video>
+  <div class="tour-progresso"><i id="tour-barra"></i></div>
+</div>
+
+<script src="js/i18n.js?v=24"></script>
+<script src="js/landing.js?v=24"></script>
+<script src="js/handlers-landing.js?v=7" defer></script>
+</body>
+</html>

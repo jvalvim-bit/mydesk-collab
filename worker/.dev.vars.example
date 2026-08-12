@@ -1,0 +1,14 @@
+# Local development only. Never put production values here.
+MYDESK_COLLAB_MODE=1
+MYDESK_ENABLE_SCHEDULED_JOBS=0
+MYDESK_ENABLE_EMAIL=0
+
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+FIREBASE_DATABASE_URL=
+RESEND_API_KEY=
+
+REMETENTE=MyDesk Colab <reminders@example.test>
+APP_URL=http://localhost:3000
+LOGO_URL=http://localhost:3000/img/logo-mydesk.png

@@ -1,0 +1,774 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MYDESK — CAMADA COMPACTA DO APP
+   ═══════════════════════════════════════════════════════════════════════
+   Carregado DEPOIS do main.css. A camada entra em celulares e também em
+   monitores desktop no modo retrato, onde a barra horizontal anterior
+   cortava ações importantes.
+
+   Por que um arquivo separado: o mobile que existia estava espremido numa
+   única linha de 5 mil caracteres no meio do main.css, e era ele que
+   produzia a barra em três fileiras. Misturar mais regras ali seria
+   impossível de ler e de desfazer.
+
+   O que muda em relação ao que havia:
+
+   1. A barra de ferramentas não quebra mais em fileiras. Ela vira uma
+      barra fina com logo, workspace e nada mais; as ações vão para uma
+      navegação inferior (ao alcance do polegar) e para uma folha "Mais".
+   2. As notas saem de position:fixed. Elas guardam coordenadas de
+      desktop — x perto de 800px numa tela de 390 — e por isso o quadro
+      aparecia vazio: as notas existiam fora da tela. No celular elas
+      viram uma lista em coluna.
+   3. Todo painel flutuante (chat, clientes, amigos, eventos, fundo,
+      workspaces) vira tela cheia. Painel de 320px posicionado com
+      coordenadas de desktop não cabe em lugar nenhum aqui.
+   4. A chamada de vídeo ocupa a tela toda, com um botão de minimizar que
+      a transforma numa janelinha que se arrasta com o dedo.
+
+   Áreas seguras do iPhone (notch e barra inferior do Safari) entram via
+   env(safe-area-inset-*) — sem isso a navegação inferior fica embaixo da
+   barra do navegador e não dá para tocar.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Elementos criados pelo mobile.js não aparecem no desktop. */
+#mb-nav, #mb-sheet-bg, #mb-topbar-extra, #mb-larg { display: none; }
+
+@media (max-width: 860px),
+       (orientation: portrait) and (min-width: 861px) and (max-aspect-ratio: 25/28) and (any-pointer: fine) {
+
+  :root {
+    --mb-nav-h:  62px;   /* altura da navegação inferior, sem a área segura */
+    --mb-top-h:  52px;   /* altura da barra superior */
+    --mb-safe-b: env(safe-area-inset-bottom, 0px);
+    --mb-safe-t: env(safe-area-inset-top, 0px);
+  }
+
+  html, body { overscroll-behavior-y: none; }
+
+  /* ═══ 1. BARRA SUPERIOR ═══════════════════════════════════════════
+     Era 'flex-wrap:wrap' com dezesseis botões, o que dava três fileiras
+     e comia um quarto da tela. Agora é uma faixa fina e fixa. */
+  #toolbar {
+    position: fixed !important;
+    top: 0; left: 0; right: 0;
+    height: auto !important;
+    min-height: var(--mb-top-h);
+    padding: calc(6px + var(--mb-safe-t)) 12px 6px !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    z-index: 1500;
+    background: rgba(13, 13, 13, .92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+  }
+
+  /* Tudo que virou navegação inferior ou item da folha "Mais" sai daqui.
+     Os botões continuam no DOM, com os mesmos ids e os mesmos ouvintes —
+     a navegação apenas dispara o clique deles. Nada foi reimplementado. */
+  #toolbar .t-sep,
+  #toolbar .t-spacer,
+  #toolbar .t-count,
+  #toolbar #btn-new,
+  #toolbar #btn-shuffle,
+  #toolbar #btn-clear,
+  #toolbar #btn-restore,
+  #toolbar #btn-wallpaper,
+  #toolbar #btn-crm-view,
+  #toolbar #btn-events,
+  #toolbar #btn-social,
+  #toolbar #btn-invite,
+  #toolbar #btn-ws-lista,
+  #toolbar #btn-resumo-semana,
+  #toolbar #my-status-btn,
+  #toolbar #btn-admin,
+  #toolbar #btn-exit { display: none !important; }
+
+  .t-logo { margin-right: 0; }
+  .t-logo img { height: 26px !important; width: auto; }
+
+  #t-pill-ws {
+    max-width: none !important;
+    flex: 1 1 auto; min-width: 0;
+    font-size: .74rem !important;
+    padding: 5px 10px !important;
+  }
+  #t-user-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* O selo de Premium e o distintivo do workspace compartilhado ficam:
+     são estado, não ação, e a pessoa precisa vê-los o tempo todo. */
+  .t-premium-badge { flex-shrink: 0; font-size: .66rem !important; padding: 3px 9px !important; }
+  #ws-toolbar-btn { flex-shrink: 0; }
+  #ws-toolbar-btn .ws-active-badge { font-size: .64rem !important; max-width: 128px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ═══ 2. NAVEGAÇÃO INFERIOR ══════════════════════════════════════
+     Polegar alcança a base da tela; o topo, não. As cinco ações que a
+     pessoa mais usa moram aqui. */
+  #mb-nav {
+    display: flex !important;
+    position: fixed; left: 0; right: 0; bottom: 0;
+    z-index: 1700;
+    padding-bottom: var(--mb-safe-b);
+    background: rgba(13, 13, 13, .94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, .08);
+  }
+  .mb-nav-btn {
+    flex: 1 1 0; min-width: 0;
+    height: var(--mb-nav-h);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; padding: 0;
+    color: rgba(240, 240, 240, .5);
+    font-family: 'Inter', sans-serif; font-size: .6rem; font-weight: 500;
+    cursor: pointer; position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mb-nav-btn svg { width: 21px; height: 21px; stroke-width: 1.9; }
+  .mb-nav-btn .mb-lbl { line-height: 1; white-space: nowrap; }
+  .mb-nav-btn.active { color: #a5b4fc; }
+  .mb-nav-btn:active { background: rgba(255, 255, 255, .05); }
+
+  /* Ação principal em destaque — é o que a pessoa abre o app para fazer. */
+  .mb-nav-btn.mb-primary { color: #fff; }
+  .mb-nav-btn.mb-primary .mb-ico {
+    width: 40px; height: 28px; border-radius: 9px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, .45);
+  }
+  .mb-nav-btn.mb-primary svg { width: 18px; height: 18px; stroke-width: 2.6; }
+
+  .mb-badge {
+    position: absolute; top: 6px; left: 50%; margin-left: 4px;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 9px; background: #ef4444; border: 2px solid #0d0d0d;
+    color: #fff; font-size: .56rem; font-weight: 700; line-height: 12px;
+    display: none; align-items: center; justify-content: center;
+  }
+  .mb-badge.on { display: flex; }
+
+  /* ═══ 3. FOLHA "MAIS" ════════════════════════════════════════════ */
+  #mb-sheet-bg {
+    display: none; position: fixed; inset: 0; z-index: 1750;
+    background: rgba(0, 0, 0, .6);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+  #mb-sheet-bg.open { display: block; }
+  #mb-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: #121218;
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    padding: 8px 12px calc(16px + var(--mb-safe-b));
+    max-height: 82vh; overflow-y: auto;
+    animation: mbSheetUp .22s cubic-bezier(.16, 1, .3, 1) both;
+  }
+  @keyframes mbSheetUp { from { transform: translateY(100%); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { #mb-sheet { animation: none; } }
+
+  .mb-grip { width: 38px; height: 4px; border-radius: 3px;
+    background: rgba(255, 255, 255, .18); margin: 3px auto 10px; }
+  /* Quatro colunas e cartões baixos. Com três colunas altas a folha comia
+     mais da metade da tela para dez atalhos — muito espaço para um menu. */
+  .mb-sheet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .mb-sheet-item {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    padding: 10px 4px; border-radius: 11px;
+    background: rgba(255, 255, 255, .045);
+    border: 1px solid rgba(255, 255, 255, .07);
+    color: rgba(240, 240, 240, .78);
+    font-family: 'Inter', sans-serif; font-size: .6rem; font-weight: 500;
+    line-height: 1.25; cursor: pointer; text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mb-sheet-item:active { background: rgba(255, 255, 255, .1); }
+  .mb-sheet-item svg { width: 16px; height: 16px; stroke-width: 1.9; }
+  .mb-sheet-item.danger { color: #fca5a5; border-color: rgba(239, 68, 68, .22); }
+
+  /* ═══ 4. QUADRO E NOTAS ══════════════════════════════════════════
+     A nota é position:fixed com left/top guardados do desktop. Numa tela
+     de 390px, um x de 800 põe a nota fora da tela — era por isso que o
+     quadro parecia vazio mesmo com três notas. Em coluna, as coordenadas
+     deixam de importar. */
+  #board {
+    padding: calc(var(--mb-top-h) + var(--mb-safe-t) + 12px) 12px
+             calc(var(--mb-nav-h) + var(--mb-safe-b) + 24px) !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── Papel de parede preso à janela ───────────────────────────────
+     Aqui o #board é um contêiner de ROLAGEM, e as camadas de fundo são
+     absolutas dentro dele. `inset:0` em camada absoluta mede a caixa
+     visível, não a altura rolada: imagem, vídeo e animação cobriam só a
+     primeira tela e subiam junto com os cartões — abaixo delas sobrava o
+     preto do quadro. Era o vão que aparecia no monitor vertical.
+
+     A cor nunca teve esse defeito porque fundo de contêiner de rolagem
+     pinta a área rolável inteira; só a mídia ficava para trás.
+
+     Presas à janela, as camadas cobrem sempre a tela toda e não rolam —
+     que é exatamente como os dois canvas já se medem no app.js
+     (window.innerWidth/innerHeight). `fixed` também escapa do overflow
+     do #board, então nada é recortado.
+
+     A ordem de pintura não muda: o #board é `relative` sem z-index, ou
+     seja, não abre contexto de empilhamento — as camadas continuam em 0
+     ou auto e a nota, em z-index 1, segue por cima. */
+  #board-bg,
+  #board-bg-canvas,
+  #board-pixel-canvas,
+  #board-dots {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    right: 0 !important; bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    /* Onde existir, a altura MAIOR da janela: com a barra do navegador
+       recolhida, 100vh deixa uma faixa no rodapé em alguns celulares. */
+    height: 100lvh !important;
+  }
+
+  /* `relative` + z-index 1, e não `static`: as três camadas de fundo do quadro
+     (#board-bg, #board-bg-canvas, #board-bg-video) são absolutas dentro do
+     #board, e elemento posicionado pinta ACIMA do fundo de qualquer irmão em
+     fluxo não posicionado. Um cartão `static` ficava DEBAIXO do papel de
+     parede: sobravam só os filhos que têm posicionamento próprio, o que dava a
+     nota "transparente", com os campos soltos sobre a foto.
+     Com left/top em auto, `relative` ocupa exatamente o mesmo lugar de
+     `static` — o que muda é só a ordem de pintura. */
+  .note {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    left: auto !important; top: auto !important;
+    transform: none !important;
+    flex-shrink: 0;
+  }
+  /* Arrastar nota não move nada aqui (ela está em fluxo), então o gesto
+     fica livre para rolar a lista em vez de brigar com ela. */
+  .note, .note * { touch-action: pan-y; }
+
+  /* ── Pegar para reordenar ──────────────────────────────────────────
+     Aqui o cartão não tem coordenada: o que dá para mudar é a ORDEM. A pega
+     é a faixa do topo — a dos chips na nota, o cabeçalho na pasta — e não o
+     cartão inteiro, senão não sobraria superfície para rolar a lista com o
+     dedo (.n-head é quase o cartão todo: título e corpo moram dentro dele). */
+  .n-chip-row, .stack-header {
+    touch-action: none;
+    cursor: grab;
+  }
+  body.col-reordenando { user-select: none; -webkit-user-select: none; }
+  body.col-reordenando .n-chip-row,
+  body.col-reordenando .stack-header { cursor: grabbing; }
+  /* `order` de flex troca de lugar de uma vez, sem animação — o destaque no
+     cartão que está na mão é o que mostra que ele está sendo movido. */
+  .note.col-arrastando, .stack-wrap.col-arrastando {
+    opacity: .92;
+    transform: scale(1.015);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .55) !important;
+    z-index: 3 !important;
+  }
+  .note.dragging { transform: none !important; box-shadow: 0 6px 28px rgba(0, 0, 0, .55) !important; }
+
+  /* Pastas viram cartões de largura cheia, na mesma coluna das notas.
+     Mesmo motivo do .note acima para o position/z-index. */
+  .stack-wrap {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    left: auto !important; top: auto !important;
+    /* Item de flex encolhe por padrão, e o #board é uma coluna com altura
+       definida (overflow-y:auto). Sem isto, assim que o conteúdo passava da
+       tela o navegador espremia as pastas para caber — e como a pasta tem
+       overflow:hidden, as linhas de dentro simplesmente sumiam: a pasta dizia
+       "5" e mostrava três. Aparecia ao abrir a segunda nota, que é quando a
+       coluna passa da altura da tela. A .note já tinha a trava; a pasta não. */
+    flex-shrink: 0;
+  }
+  .stack-header { padding: 9px 11px !important; }
+  .stack-header-title { font-size: .82rem !important; }
+
+  /* Notas mais baixas: numa tela de 390px, duas notas com o respiro do
+     desktop já ocupavam a tela inteira e a lista virava uma rolagem sem fim. */
+  .note { padding: 10px 11px !important; }
+  .n-title { min-height: 0 !important; }
+  .n-text { min-height: 0 !important; }
+  .stack-card-row { padding: 8px 10px !important; }
+
+  /* Alvos de toque: 24px de área clicável não se acerta com o dedo. */
+  .n-btn, .n-color-btn, .stack-toggle-btn, .stack-header-color-dot {
+    min-width: 34px; min-height: 34px;
+  }
+  .n-title { font-size: .9rem; }
+  .n-text  { font-size: .8rem; }
+
+  /* ═══ 5. PAINÉIS EM TELA CHEIA ═══════════════════════════════════
+     Todos nasceram como janelas flutuantes de 260 a 360px, ancoradas em
+     coordenadas de desktop. No celular viram tela cheia. */
+  #social-panel, #events-panel, #wp-panel, #pw-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    left: 0 !important; right: 0 !important; top: 0 !important; bottom: 0 !important;
+    width: 100% !important; max-width: none !important;
+    height: 100% !important; max-height: none !important;
+    transform: none !important;
+    border: none !important; border-radius: 0 !important;
+    padding-top: calc(var(--mb-safe-t) + 10px) !important;
+    padding-bottom: calc(var(--mb-safe-b) + 16px) !important;
+    z-index: 1800 !important;
+    overflow-y: auto !important;
+    display: none;
+  }
+  #social-panel.open, #events-panel.open, #wp-panel.open, #pw-panel.open,
+  #social-panel.visible, #wp-panel.visible { display: flex !important; flex-direction: column; }
+  #events-panel.open, #wp-panel.open, #pw-panel.open { display: block !important; }
+
+  .sp-header { padding: 14px 16px 12px !important; }
+  .sp-body { padding: 12px !important; }
+
+  /* Botão de fechar grande, no topo — sem ele a folha vira armadilha:
+     no celular não existe "clicar fora" confiável. */
+  .mb-close {
+    position: sticky; top: 0; float: right;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255, 255, 255, .09);
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: #fff; font-size: 1rem; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 5; margin: 0 0 4px 8px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ═══ 6. CLIENTES (CRM) ══════════════════════════════════════════
+     Vinha como painel solto e sobrava fundo de tela por baixo. */
+  #crm-view.visible {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1450;
+    background: #0a0a0a;
+    padding-top: calc(var(--mb-top-h) + var(--mb-safe-t)) !important;
+    padding-bottom: calc(var(--mb-nav-h) + var(--mb-safe-b)) !important;
+  }
+  .cdash-hero { padding: 18px 16px 60px !important; }
+  .cdash-hero-title { font-size: 1.15rem !important; }
+  .cdash-kpis { grid-template-columns: 1fr !important; padding: 0 14px; }
+  .cdash-kpi-num { font-size: 1.35rem !important; }
+  .cdash-search { font-size: .85rem; }
+
+  /* ═══ 7. CHAT ════════════════════════════════════════════════════ */
+  .chat-win {
+    position: fixed !important;
+    inset: 0 !important;
+    left: 0 !important; right: 0 !important; top: 0 !important; bottom: 0 !important;
+    width: 100% !important; height: 100% !important;
+    border: none !important; border-radius: 0 !important;
+    z-index: 1900 !important;
+    padding-top: var(--mb-safe-t);
+  }
+  .chat-win.minimized { height: 100% !important; }
+  .chat-header { padding: 12px 14px !important; }
+  .chat-msgs { padding: 12px !important; }
+  .chat-msg { max-width: 88% !important; }
+  .chat-input-row {
+    padding: 10px 12px calc(10px + var(--mb-safe-b)) !important;
+    background: #111;
+  }
+  /* 16px é o limite abaixo do qual o Safari do iPhone dá zoom sozinho ao
+     focar o campo — e depois deixa a página torta. */
+  .chat-inp, .sp-add-inp, .pw-add-inp, .a-inp, input[type="text"], input[type="email"],
+  input[type="password"], input[type="search"], textarea { font-size: 16px !important; }
+  .chat-file-btn, .chat-send { width: 38px !important; height: 38px !important; }
+
+  /* ═══ 8. VIDEOCHAMADA ════════════════════════════════════════════
+     Era um cartão de 340x260 fixo no canto, por cima do chat, e o arraste
+     só escutava mousedown — no toque não havia como tirá-lo do lugar.
+     Aqui ele ocupa a tela toda; quem quiser continuar vendo o chat usa o
+     botão de minimizar, e aí a janelinha se arrasta com o dedo. */
+  #call-overlay {
+    inset: 0 !important;
+    left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100% !important; height: 100% !important;
+    max-width: none !important; max-height: none !important;
+    border-radius: 0 !important; border: none !important;
+    resize: none !important;
+    z-index: 2000 !important;
+    padding-top: var(--mb-safe-t);
+  }
+  #call-overlay .call-header { padding: 12px 14px !important; cursor: default; }
+  #call-overlay .call-grid { padding: 10px !important; gap: 10px !important; align-content: center; }
+  #call-overlay .call-tile { width: 100% !important; height: auto !important; aspect-ratio: 3 / 4; }
+  #call-overlay .call-grid.has-focus .call-tile { width: 78px !important; height: 104px !important; aspect-ratio: auto; }
+  #call-overlay .call-grid.has-focus .call-tile.focused { width: 100% !important; height: auto !important; aspect-ratio: 3 / 4; }
+  #call-overlay .call-controls {
+    gap: 16px !important;
+    padding: 14px 10px calc(16px + var(--mb-safe-b)) !important;
+  }
+  #call-overlay .call-ctrl-btn { width: 52px !important; height: 52px !important; font-size: 1.15rem !important; }
+
+  /* Minimizada: janelinha arrastável. inset volta a ser automático para o
+     left/top que o arraste escreve valerem de fato. */
+  #call-overlay.mb-min {
+    inset: auto !important;
+    width: 150px !important; height: 200px !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, .16) !important;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .7) !important;
+    padding-top: 0;
+    overflow: hidden;
+    touch-action: none;   /* o dedo arrasta a janela, não rola a página */
+  }
+  #call-overlay.mb-min .call-title,
+  #call-overlay.mb-min .call-wave,
+  #call-overlay.mb-min .call-timer { display: none !important; }
+  #call-overlay.mb-min .call-header { padding: 6px 8px !important; cursor: grab; }
+  #call-overlay.mb-min .call-grid { padding: 4px !important; }
+  #call-overlay.mb-min .call-tile { aspect-ratio: auto; height: 100% !important; }
+  #call-overlay.mb-min .call-controls { gap: 6px !important; padding: 6px !important; }
+  #call-overlay.mb-min .call-ctrl-btn { width: 30px !important; height: 30px !important; font-size: .72rem !important; }
+  #call-overlay.mb-min .call-ctrl-btn:not(.leave):not(#call-btn-min) { display: none; }
+
+  #call-btn-min { position: absolute; top: 10px; right: 10px; z-index: 3;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(0, 0, 0, .5); border: 1px solid rgba(255, 255, 255, .18);
+    color: #fff; font-size: .9rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; }
+  #call-overlay.mb-min #call-btn-min { position: static; width: 30px; height: 30px; }
+
+  /* ═══ 9. MODAIS E SOBREPOSIÇÕES ══════════════════════════════════ */
+  .modal-bg { align-items: flex-end !important; }
+  .modal {
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 20px 16px calc(24px + var(--mb-safe-b)) !important;
+    max-height: 90vh !important;
+  }
+  .admin-overlay .admin-panel {
+    width: 100% !important; height: 100% !important;
+    max-width: none !important; max-height: none !important;
+    border-radius: 0 !important;
+    padding-top: var(--mb-safe-t);
+  }
+  .admin-table { font-size: .7rem; }
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Avisos empilhados não podem cobrir a navegação inferior. */
+  /* O feed sobe acima da navegacao inferior, como os demais avisos. */
+  #ativ-feed { left: 10px; right: 10px; max-width: none;
+    bottom: calc(var(--mb-nav-h) + var(--mb-safe-b) + 10px) !important; }
+
+  #chat-notif-stack {
+    left: 10px !important; right: 10px !important;
+    bottom: calc(var(--mb-nav-h) + var(--mb-safe-b) + 10px) !important;
+    top: auto !important;
+  }
+  #toast { bottom: calc(var(--mb-nav-h) + var(--mb-safe-b) + 12px) !important; }
+
+  .support-fab { bottom: calc(var(--mb-nav-h) + var(--mb-safe-b) + 12px) !important; }
+
+  /* ═══ 10. SOBREPOSIÇÕES COM FUNDO PRÓPRIO ════════════════════════
+     A seção 9 cuida de quem usa .modal-bg/.modal. Estas telas nasceram
+     depois e trouxeram o próprio fundo e o próprio cartão — construtor de
+     formulário, respostas, tipo de pasta, resumo, visualizador de documento,
+     chamada. Nenhuma tinha regra aqui: abriam com largura de desktop, cartão
+     centralizado e altura calculada em vh, o que no celular deixa o conteúdo
+     colado nas bordas e o rodapé embaixo da barra do navegador.
+
+     O padrão adotado é o mesmo dos modais: folha colada na base, cantos
+     arredondados só no topo, altura no máximo 92vh e respiro da área segura
+     inferior. Folha em vez de tela cheia porque o fundo visível é a única
+     saída confiável no toque, junto do botão de fechar. */
+  .fr-bg, .fm-bg, .tipo-pasta-bg, .ia-resumo-bg, .crm-doc-viewer-bg,
+  .chamada-bg, .chamando-bg {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .fr-card, .fm-card, .tipo-pasta-card, .ia-resumo-card, .crm-doc-viewer,
+  .chamada-card, .chamando-card {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 92vh !important;
+    border-radius: 18px 18px 0 0 !important;
+    border-bottom: none !important;
+  }
+  /* O visualizador de documento é o único que precisa de altura fixa: dentro
+     dele rola a página do PDF, e altura automática colapsaria o quadro. */
+  .crm-doc-viewer { height: 92vh !important; }
+  .crm-doc-viewer-body { padding: 10px !important; }
+  .crm-doc-viewer-dl, .crm-doc-viewer-close { width: 34px !important; height: 34px !important; }
+
+  /* ── Respostas e importação para a ficha do cliente ── */
+  .fr-corpo { padding-bottom: calc(16px + var(--mb-safe-b)) !important; }
+  /* Três controles em fileira (criar, escolher cliente, anexar) não cabem em
+     360px: o select encolhia até não mostrar nome nenhum. Em coluna, o select
+     ocupa a linha inteira e os botões dividem a de baixo. */
+  .fr-acoes { flex-wrap: wrap; gap: 8px !important; }
+  .fr-sel { max-width: none !important; flex: 1 1 100%; padding: 9px 10px !important;
+    font-size: .78rem !important; }
+  .fr-b { flex: 1 1 auto; min-height: 40px; font-size: .78rem !important; }
+  .fr-x, .fm-x, .fm-voltar { min-width: 36px; min-height: 36px; }
+
+  /* ── Construtor de formulário ──
+     O main.css já empilha as três colunas abaixo de 1040px. Falta o resto:
+     a fileira de cada campo tem rótulo, tipo, obrigatório e apagar, e em
+     360px isso deixava o rótulo com uns poucos caracteres visíveis. */
+  .fm-corpo { max-height: none !important; }
+  .fm-campo { flex-wrap: wrap; }
+  .fm-campo-rot { flex: 1 1 100%; order: 1; font-size: 16px !important; }
+  .fm-mover { order: 2; }
+  .fm-campo-tipo { order: 3; flex: 1 1 auto; max-width: none !important;
+    min-height: 36px; font-size: .74rem !important; }
+  .fm-campo-obr, .fm-campo-del { order: 4; min-width: 34px; min-height: 34px; }
+  .fm-mover-b { min-width: 30px; min-height: 26px; }
+  /* Os passos rolam na horizontal em vez de quebrar em duas fileiras. */
+  .fm-passos { display: flex !important; overflow-x: auto; gap: 8px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .fm-passos::-webkit-scrollbar { display: none; }
+  .fm-passo { flex: 0 0 auto; }
+  .fm-previa { border-left: none !important;
+    border-top: 1px solid rgba(255, 255, 255, .08) !important; }
+  .fm-inp, .fm-opcoes-inp { font-size: 16px !important; }
+  .fm-link { word-break: break-all; }
+
+  /* ── Que tipo de pasta é esta ── */
+  .tipo-pasta-op { min-height: 52px; }
+  .tipo-pasta-inp { font-size: 16px !important; }
+  .tipo-pasta-ops { gap: 8px; }
+
+  /* ═══ 11. RELATÓRIO FINANCEIRO ════════════════════════════════════
+     A folha do relatório é um documento A4 desenhado para caber em 820px.
+     No celular ela precisa perder o respiro de papel — senão sobra mais
+     margem que conteúdo — e a barra de ações precisa da área segura, ou os
+     três botões ficam debaixo da barra do Safari. */
+  #crm-relatorio.aberto {
+    padding: 0 0 calc(20px + var(--mb-safe-b)) !important;
+  }
+  .rel-folha {
+    border-radius: 0 !important;
+    padding: 22px 16px 28px !important;
+    box-shadow: none !important;
+  }
+  .rel-masthead { flex-direction: column; gap: 10px !important; }
+  .rel-logo { align-self: flex-start; }
+  .rel-hero-num { font-size: 1.9rem !important; letter-spacing: -1px !important; }
+  .rel-masthead h1 { font-size: 1.3rem !important; }
+  .rel-comp-leg { gap: 14px !important; }
+  .rel-kpis { grid-template-columns: repeat(2, 1fr) !important; }
+  .rel-folha section { margin-bottom: 24px !important; }
+  /* Tabela larga rola dentro do próprio bloco: a folha nunca rola de lado. */
+  .rel-folha table { font-size: .74rem !important; }
+  .rel-tab th, .rel-tab td { padding-left: 4px !important; padding-right: 4px !important; }
+  /* As ações agora ficam no fim da folha, em fluxo. Aqui só ganham alvo
+     tocável e a folga da área segura. */
+  .rel-acoes { gap: 8px !important; padding-bottom: var(--mb-safe-b); }
+  .rel-acoes button { flex: 1 1 auto; min-height: 42px; padding: 10px 12px !important;
+    font-size: .8rem !important; }
+}
+
+/* Monitor vertical de desktop.
+   A mesma navegação compacta mantém todas as ações alcançáveis, mas o quadro
+   ganha uma coluna central confortável em vez de esticar cada nota por 1080px.
+
+   A condição precisa ser IDÊNTICA à do bloco de cima, que é quem devolve nota
+   e pasta ao fluxo. Sem `max-aspect-ratio` e `any-pointer` aqui, este bloco
+   pegava numa faixa em que o outro não pegava: o quadro virava coluna e a
+   largura da nota era trocada, mas a nota seguia position:fixed na coordenada
+   do quadro horizontal — esticada e por cima de tudo. */
+@media (orientation: portrait) and (min-width: 861px)
+       and (max-aspect-ratio: 25/28) and (any-pointer: fine) {
+  body.layout-portrait {
+    /* Largura da coluna de cartões. Em 760px uma nota aberta enchia o
+       monitor vertical sozinha, e a tela seguinte já era rolagem. O padrão
+       agora é bem menor, e quem quiser mais (ou menos) ajusta na mão: pela
+       alça na borda direita da coluna ou pelo controle na folha "Mais". A
+       escolha volta como --portrait-largura no style do body (mobile.js) e
+       fica guardada no navegador — é preferência de tela, não da conta. */
+    --portrait-largura: 520px;
+    --portrait-content: min(var(--portrait-largura), calc(100vw - 48px));
+    /* A navegação e a folha acompanham a coluna, mas param de encolher em
+       420px: abaixo disso os cinco botões da barra ficam ilegíveis. */
+    --portrait-barra: min(max(var(--portrait-content), 420px), calc(100vw - 32px));
+  }
+
+  body.layout-portrait #toolbar {
+    padding-left: max(24px, calc((100vw - 920px) / 2)) !important;
+    padding-right: max(24px, calc((100vw - 920px) / 2)) !important;
+  }
+
+  body.layout-portrait #board {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-padding-top: calc(var(--mb-top-h) + 16px);
+  }
+
+  /* Quem devolve nota e pasta ao fluxo é o bloco de cima (position:static).
+     Aqui só se troca a largura cheia por uma coluna central — e se desfaz a
+     altura que o redimensionamento gravou no style inline da nota.
+
+     Essa altura é a que sobrava: foi medida num quadro horizontal, com a nota
+     em 240px de largura. Na coluna de 760px o mesmo texto ocupa bem menos
+     linhas, então a altura fixa virava um cartão vazio e alto, com barra de
+     rolagem própria — e a alça que a ajustaria não existe neste layout. */
+  body.layout-portrait #board > .note,
+  body.layout-portrait #board > .stack-wrap {
+    width: var(--portrait-content) !important;
+    max-width: var(--portrait-content) !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  body.layout-portrait .note .n-resize {
+    display: none !important;
+  }
+
+  body.layout-portrait .note .n-head {
+    cursor: default;
+  }
+
+  body.layout-portrait #mb-nav {
+    left: 50%;
+    right: auto;
+    width: var(--portrait-barra);
+    transform: translateX(-50%);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    overflow: hidden;
+    box-shadow: 0 -16px 42px rgba(0, 0, 0, .32);
+  }
+
+  body.layout-portrait #mb-sheet {
+    left: max(16px, calc((100vw - var(--portrait-barra)) / 2));
+    right: auto;
+    width: var(--portrait-barra);
+    border-left: 1px solid rgba(255, 255, 255, .1);
+    border-right: 1px solid rgba(255, 255, 255, .1);
+  }
+
+  /* ── Alça de largura ──────────────────────────────────────────────
+     O ajuste manual. Fica encostada na borda direita da coluna, discreta
+     até o mouse chegar perto. Não existe no celular: lá a coluna é a tela
+     inteira e não há o que ajustar.
+
+     Arrastar 1px move as DUAS bordas (a coluna é centralizada), por isso o
+     mobile.js soma o dobro do deslocamento. */
+  body.layout-portrait #mb-larg {
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: calc(50% + var(--portrait-content) / 2 + 12px);
+    transform: translateY(-50%);
+    width: 12px; height: 78px; padding: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .1);
+    cursor: ew-resize;
+    touch-action: none;
+    opacity: .4;
+    z-index: 1450;
+    transition: opacity .18s, background .18s, border-color .18s;
+  }
+  body.layout-portrait #mb-larg::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(255, 255, 255, .5), rgba(255, 255, 255, .5))
+                center / 2px 28px no-repeat;
+  }
+  body.layout-portrait #mb-larg:hover,
+  body.layout-portrait #mb-larg:focus-visible,
+  body.layout-portrait #mb-larg.mb-arrastando {
+    opacity: 1;
+    background: rgba(99, 102, 241, .38);
+    border-color: rgba(165, 180, 252, .5);
+  }
+  /* O número só aparece durante o arraste — é a única hora em que ele
+     ajuda, e o resto do tempo seria mais uma coisa flutuando na tela. */
+  body.layout-portrait #mb-larg.mb-arrastando::after {
+    content: attr(data-val);
+    position: absolute; left: 20px; top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 8px; border-radius: 7px;
+    background: rgba(13, 13, 13, .92);
+    border: 1px solid rgba(255, 255, 255, .12);
+    color: #e8e8ea;
+    font-family: 'Inter', sans-serif; font-size: .66rem; font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ── Mesmo ajuste, dentro da folha "Mais" ─────────────────────────
+     A alça é direta, mas ninguém descobre uma alça sozinho. O controle
+     aqui é o caminho com nome. */
+  body.layout-portrait .mb-sheet-larg {
+    margin-top: 8px;
+    padding: 11px 12px 9px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .045);
+    border: 1px solid rgba(255, 255, 255, .07);
+  }
+  body.layout-portrait .mb-sheet-larg-top {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Inter', sans-serif; font-size: .7rem;
+    color: rgba(240, 240, 240, .78);
+    margin-bottom: 6px;
+  }
+  body.layout-portrait .mb-sheet-larg-val { color: #a5b4fc; font-weight: 600; }
+  body.layout-portrait .mb-sheet-larg input[type="range"] {
+    width: 100%; accent-color: #6366f1; cursor: pointer;
+  }
+  body.layout-portrait .mb-sheet-larg-reset {
+    background: none; border: 0; padding: 6px 0 0;
+    color: rgba(240, 240, 240, .5);
+    font-family: 'Inter', sans-serif; font-size: .64rem;
+    cursor: pointer;
+  }
+  body.layout-portrait .mb-sheet-larg-reset:hover { color: rgba(240, 240, 240, .85); }
+
+  body.layout-portrait #crm-charts-row {
+    flex-direction: column;
+  }
+
+  body.layout-portrait .crm-chart-panel,
+  body.layout-portrait .crm-chart-panel-wide {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.layout-portrait .crm-table-wrap,
+  body.layout-portrait .admin-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.layout-portrait .crm-client-modal .crm-modal-row,
+  body.layout-portrait .modal .m-dates {
+    flex-direction: column;
+  }
+
+  body.layout-portrait .report-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Celulares pequenos (iPhone SE e afins) */
+@media (max-width: 380px) {
+  .mb-nav-btn { font-size: .55rem; }
+  .mb-nav-btn svg { width: 19px; height: 19px; }
+  .mb-sheet-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Telefone deitado: a tela fica baixa demais para barra + navegação. */
+@media (max-width: 860px) and (max-height: 460px) and (orientation: landscape) {
+  #mb-nav { --mb-nav-h: 48px; }
+  .mb-nav-btn .mb-lbl { display: none; }
+  #toolbar { min-height: 44px; }
+}

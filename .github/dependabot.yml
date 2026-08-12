@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Dependências das funções serverless (firebase-admin e transitivas).
+  # Semanal: o projeto tem poucas dependências e diário viraria ruído.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+    groups:
+      # Um PR só para o conjunto do firebase-admin: as transitivas dele sobem
+      # juntas e abrir cinco PRs para a mesma árvore não ajuda ninguém.
+      firebase:
+        patterns:
+          - firebase-admin
+          - "@google-cloud/*"
+          - google-gax
+          - gaxios
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci

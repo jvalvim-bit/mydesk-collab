@@ -1,0 +1,31 @@
+{
+  "name": "mydesk-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "deploy:rules": "firebase deploy --only database"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "firebase-admin": "^13.10.0",
+    "stripe": "^22.3.2"
+  },
+  "//overrides": [
+    "uuid 9.x tem alerta de bounds check em v3/v5/v6 quando `buf` é passado, e",
+    "a correção só existe a partir da 14. Ele entra por três dependências",
+    "transitivas do firebase-admin (gaxios, google-gax, teeny-request) e",
+    "nenhuma aceita 14 no range — por isso o Dependabot não sobe sozinho.",
+    "Atualizar o firebase-admin não resolve: a 14.2.0 continua resolvendo 9.0.1.",
+    "As três usam SOMENTE uuid.v4(), que não é a função afetada — isto é",
+    "higiene, não remendo de exploração. A 14 é ESM puro e as três chamam",
+    "require('uuid'): funciona porque o Node carrega ESM síncrono por require",
+    "desde a 20.19, e o runtime aqui é 24 (ver engines)."
+  ],
+  "overrides": {
+    "uuid": "^14.0.1"
+  }
+}

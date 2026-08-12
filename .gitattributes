@@ -1,0 +1,16 @@
+# docs/ aqui NÃO é documentação: é a raiz que o GitHub Pages publica, com o
+# app inteiro dentro. O Linguist, que calcula a barra de linguagens, trata
+# qualquer pasta chamada docs/ como documentação e a descarta das estatísticas
+# — e como fora dela só existe JavaScript (api/, lib/, scripts/, test/,
+# worker/), a barra dizia "JavaScript 100%" enquanto ~540 KB de CSS e HTML
+# ficavam invisíveis. Esta linha diz ao Linguist que a pasta é código.
+docs/** linguist-documentation=false
+
+# Biblioteca de terceiros (PDF.js) — não deve contar nas estatísticas de
+# linguagem do GitHub nem aparecer em diffs/revisões de código.
+# Vem DEPOIS da regra acima de propósito: `vendored` exclui por si só, mas
+# manter a ordem deixa explícito quem tem a última palavra sobre esta pasta.
+docs/js/vendor/** linguist-vendored
+docs/js/vendor/** linguist-generated=true
+docs/js/vendor/** -diff
+package-lock.json linguist-generated=true

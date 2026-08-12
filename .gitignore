@@ -1,0 +1,53 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Local frontend configuration
+docs/js/firebase-config.local.js
+!docs/js/firebase-config.local.example.js
+
+# Dependencies
+node_modules/
+
+# Deployment state
+.vercel/
+.firebase/
+worker/.wrangler/
+
+# Cloudflare Worker local variables
+worker/.dev.vars
+worker/.dev.vars.*
+!worker/.dev.vars.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Firebase Admin / service accounts
+*serviceAccount*.json
+*firebase-adminsdk*.json
+
+# Credentials and exports
+credentials.json
+secrets.json
+backups/
+*.sql
+*.sqlite
+*.sqlite3
+
+# Logs, test output, caches and builds
+*.log
+logs/
+firebase-debug.log
+.cache/
+dist/
+build/
+coverage/
+.nyc_output/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,320 @@
+.t-btn-report {
+  color: #c4b5fd !important;
+  border-color: rgba(139, 92, 246, .25) !important;
+  background: linear-gradient(145deg, rgba(139, 92, 246, .12), rgba(79, 70, 229, .06)) !important;
+}
+
+.report-modal-open {
+  overflow: hidden;
+}
+
+.report-modal-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(3, 3, 9, .74);
+  backdrop-filter: blur(14px) saturate(125%);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.report-modal-bg.visible {
+  opacity: 1;
+}
+
+.report-modal-card {
+  width: min(610px, 100%);
+  max-height: min(820px, calc(100dvh - 36px));
+  overflow: auto;
+  color: #f5f3ff;
+  border: 1px solid rgba(167, 139, 250, .2);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 8% -5%, rgba(124, 58, 237, .2), transparent 38%),
+    linear-gradient(155deg, rgba(25, 22, 39, .98), rgba(12, 12, 18, .99));
+  box-shadow: 0 32px 100px rgba(0, 0, 0, .62), 0 0 0 1px rgba(255, 255, 255, .025) inset;
+  transform: translateY(16px) scale(.975);
+  transition: transform .26s cubic-bezier(.2, .85, .24, 1);
+}
+
+.report-modal-bg.visible .report-modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.report-modal-head {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 34px;
+  align-items: start;
+  gap: 14px;
+  padding: 24px 25px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.report-modal-symbol {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  color: #ddd6fe;
+  border: 1px solid rgba(167, 139, 250, .28);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(124, 58, 237, .33), rgba(79, 70, 229, .12));
+  box-shadow: 0 10px 28px rgba(76, 29, 149, .23);
+}
+
+.report-modal-symbol svg {
+  width: 23px;
+  height: 23px;
+}
+
+.report-modal-head strong {
+  display: block;
+  margin-top: 1px;
+  font: 700 1.08rem/1.35 "Inter", sans-serif;
+  letter-spacing: -.01em;
+}
+
+.report-modal-head small {
+  display: block;
+  max-width: 445px;
+  margin-top: 5px;
+  color: rgba(226, 232, 240, .58);
+  font: 400 .78rem/1.5 "Inter", sans-serif;
+}
+
+.report-modal-close {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: rgba(226, 232, 240, .56);
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
+.report-modal-close:hover,
+.report-modal-close:focus-visible {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .06);
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 21px 25px 25px;
+  font-family: "Inter", sans-serif;
+}
+
+.report-form fieldset {
+  min-width: 0;
+  margin: 0 0 9px;
+  padding: 0;
+  border: 0;
+}
+
+.report-form legend,
+.report-form > label {
+  margin: 2px 0 3px;
+  color: rgba(237, 233, 254, .76);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.report-category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.report-category {
+  display: grid;
+  grid-template-columns: 31px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1px 9px;
+  padding: 13px 14px;
+  text-align: left;
+  color: rgba(241, 245, 249, .82);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .025);
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.report-category:hover {
+  transform: translateY(-1px);
+  border-color: rgba(167, 139, 250, .22);
+  background: rgba(124, 58, 237, .07);
+}
+
+.report-category.active {
+  border-color: rgba(139, 92, 246, .68);
+  background: linear-gradient(145deg, rgba(124, 58, 237, .2), rgba(79, 70, 229, .08));
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, .1) inset;
+}
+
+.report-category > span {
+  grid-row: 1 / span 2;
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  color: #c4b5fd;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, .14);
+  font-weight: 800;
+}
+
+.report-category b {
+  font-size: .76rem;
+}
+
+.report-category small {
+  overflow: hidden;
+  color: rgba(226, 232, 240, .48);
+  font-size: .63rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-form > input,
+.report-form > textarea {
+  width: 100%;
+  box-sizing: border-box;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, .16);
+  outline: 0;
+  border-radius: 13px;
+  background: rgba(5, 6, 13, .58);
+  font: 400 .82rem/1.5 "Inter", sans-serif;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.report-form > input {
+  height: 46px;
+  padding: 0 14px;
+  margin-bottom: 7px;
+}
+
+.report-form > textarea {
+  min-height: 150px;
+  max-height: 280px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.report-form > input:focus,
+.report-form > textarea:focus {
+  border-color: rgba(139, 92, 246, .74);
+  background: rgba(8, 8, 18, .78);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+}
+
+.report-form > input::placeholder,
+.report-form > textarea::placeholder {
+  color: rgba(203, 213, 225, .32);
+}
+
+.report-form-meta {
+  min-height: 24px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 12px;
+  color: rgba(203, 213, 225, .35);
+  font-size: .65rem;
+}
+
+.report-status {
+  justify-self: end;
+  text-align: right;
+}
+
+.report-status.error {
+  color: #fda4af;
+}
+
+.report-status.success {
+  color: #6ee7b7;
+}
+
+.report-form footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.report-form footer button {
+  min-height: 42px;
+  padding: 0 17px;
+  border-radius: 12px;
+  font: 700 .75rem "Inter", sans-serif;
+  cursor: pointer;
+}
+
+.report-cancel {
+  color: rgba(226, 232, 240, .62);
+  border: 1px solid rgba(255, 255, 255, .09);
+  background: rgba(255, 255, 255, .035);
+}
+
+.report-submit {
+  color: white;
+  border: 1px solid rgba(167, 139, 250, .28);
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, .24);
+}
+
+.report-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.report-submit:disabled {
+  opacity: .58;
+  cursor: wait;
+}
+
+@media (max-width: 620px) {
+  .report-modal-bg {
+    align-items: end;
+    padding: 10px;
+  }
+
+  .report-modal-card {
+    width: 100%;
+    max-height: calc(100dvh - 12px);
+    border-radius: 22px;
+  }
+
+  .report-modal-head,
+  .report-form {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .report-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-modal-bg,
+  .report-modal-card,
+  .report-category,
+  .report-submit {
+    transition: none !important;
+  }
+}

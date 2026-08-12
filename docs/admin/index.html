@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- ═══════════════════════════════════════════════════════════════
+     Content-Security-Policy — a mesma do app, sem 'unsafe-inline' em
+     script-src. Por isso não existe um único on*= nesta página e todo
+     o comportamento vive em admin.js.
+     ═══════════════════════════════════════════════════════════════ -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' https://www.gstatic.com https://apis.google.com https://*.firebaseio.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://mydesk-eta.vercel.app;
+  frame-src 'self' https://mydesk-ad0da.firebaseapp.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
+<title>Painel Administrativo — MyDesk</title>
+<!-- Área interna: não deve aparecer em busca nenhuma. -->
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="assets/mydesk-icon-898619d1.png">
+<meta name="theme-color" content="#07080d">
+
+<script src="../js/frame-guard.js?v=1"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<!-- Reaproveitados do app, não duplicados: a mesma configuração do Firebase e
+     o mesmo serviço de sessão que o MyDesk usa. -->
+<script src="../js/firebase-config.local.js"></script>
+<script src="../js/firebase-init.js?v=8"></script>
+<script src="../js/auth-service.js?v=1"></script>
+<!-- Limite do plano gratuito: mesma fonte que o app usa, para o painel nao
+     inventar um numero proprio. -->
+<script src="../js/plan-limits.js?v=2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/i18n.css?v=1">
+<link rel="stylesheet" href="admin.css?v=9">
+</head>
+<body data-i18n-static>
+
+<!-- ══ PORTÃO DE ENTRADA ═══════════════════════════════════════════════
+     A página nasce mostrando só isto. O conteúdo administrativo fica com
+     hidden até a permissão ser confirmada — nenhuma leitura do banco
+     acontece antes disso. ══════════════════════════════════════════ -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <div class="gate-spinner" aria-hidden="true"></div>
+    <div class="gate-title" id="gate-title">Verificando acesso…</div>
+    <div class="gate-sub" id="gate-sub">Confirmando a sua sessão e a permissão administrativa.</div>
+    <div class="gate-actions" id="gate-actions" hidden>
+      <a class="btn btn-primary" id="gate-go-app" href="../index.html">Ir para o MyDesk</a>
+      <a class="btn" id="gate-go-login" href="../login.html?mode=signin">Entrar</a>
+    </div>
+  </div>
+</div>
+
+<div id="shell" class="shell" hidden>
+
+  <!-- ══ MENU LATERAL ══ -->
+  <aside class="sidebar" id="sidebar" aria-label="Navegação administrativa">
+    <div class="side-brand">
+      <img class="side-brand-logo" src="assets/mydesk-logo-898619d1.png"
+           width="215" height="62" alt="MyDesk">
+      <div class="side-brand-sub"><i></i> Administração</div>
+    </div>
+
+    <nav class="side-nav">
+      <div class="side-nav-rotulo">Navegação</div>
+      <button class="side-link is-active" data-secao="visao"    type="button"><span class="side-ico" aria-hidden="true">◈</span>Visão geral</button>
+      <button class="side-link"           data-secao="usuarios" type="button"><span class="side-ico" aria-hidden="true">☰</span>Usuários</button>
+      <button class="side-link"           data-secao="assinaturas" type="button"><span class="side-ico" aria-hidden="true">★</span>Assinaturas</button>
+      <button class="side-link"           data-secao="reportes" type="button"><span class="side-ico" aria-hidden="true">!</span>Reportes<span class="side-count" id="reportes-badge" hidden>0</span></button>
+      <button class="side-link"           data-secao="admins"   type="button"><span class="side-ico" aria-hidden="true">⚿</span>Administradores</button>
+      <button class="side-link"           data-secao="atividade" type="button"><span class="side-ico" aria-hidden="true">≡</span>Atividade</button>
+      <button class="side-link"           data-secao="config"   type="button"><span class="side-ico" aria-hidden="true">⚙</span>Configurações</button>
+    </nav>
+
+    <div class="side-foot">
+      <a class="side-link" href="../index.html"><span class="side-ico" aria-hidden="true">←</span>Voltar ao MyDesk</a>
+      <button class="side-link is-danger" id="btn-sair" type="button"><span class="side-ico" aria-hidden="true">⏻</span>Sair</button>
+    </div>
+  </aside>
+  <div class="side-scrim" id="side-scrim" hidden></div>
+
+  <!-- ══ ÁREA PRINCIPAL ══ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="btn-menu" type="button" aria-label="Abrir menu">☰</button>
+      <div class="topbar-heading">
+        <span class="topbar-kicker">Central de controle</span>
+        <h1 class="topbar-title" id="titulo-secao">Visão geral</h1>
+      </div>
+      <div class="topbar-right">
+        <div data-language-selector></div>
+        <button class="icon-btn" id="btn-recarregar" type="button" aria-label="Recarregar dados" title="Recarregar">↻</button>
+        <div class="admin-account" title="Administrador conectado">
+          <span class="admin-account-avatar" id="admin-account-avatar">A</span>
+          <span class="whoami" id="whoami"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+
+      <!-- ── VISÃO GERAL ── -->
+      <section class="secao is-active" data-secao="visao">
+        <div class="cards" id="cards-visao"></div>
+        <!-- Receita: responde outra pergunta que a contagem de contas não
+             responde — não é "quantos são", é "quanto entra". Carrega sob
+             demanda porque cada abertura consulta a Stripe ao vivo. -->
+        <!-- Acessos: sai do último login registrado pelo Firebase Auth, que já
+             é carregado. Administradores ficam de fora — o acesso de quem opera
+             não é uso do produto. -->
+        <div class="cards" id="cards-acessos"></div>
+        <div class="cards" id="cards-receita"></div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-hd"><h2>Grátis e Premium</h2></div>
+            <div class="panel-bd" id="graf-planos"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-hd"><h2>Cadastros por mês</h2><span class="panel-hint">últimos 6 meses</span></div>
+            <div class="panel-bd" id="graf-cadastros"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd"><h2>Assinaturas com vencimento</h2><span class="panel-hint" id="hint-vencimentos">todas, da mais próxima para a mais distante</span></div>
+          <div class="panel-bd" id="vencendo-breve"></div>
+        </div>
+      </section>
+
+      <!-- ── USUÁRIOS ── -->
+      <section class="secao" data-secao="usuarios">
+        <div class="toolbar">
+          <div class="campo-busca">
+            <span class="busca-ico" aria-hidden="true">⌕</span>
+            <input id="busca" type="search" placeholder="Buscar por nome, @, e-mail ou UID…"
+                   autocomplete="off" aria-label="Buscar usuário">
+          </div>
+          <label class="sel-wrap"><span class="sel-lbl">Filtro</span>
+            <select id="filtro" aria-label="Filtrar usuários">
+              <option value="todos">Todos</option>
+              <option value="gratis">Grátis</option>
+              <option value="premium">Premium</option>
+              <option value="admins">Administradores</option>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
+              <option value="bloqueados">Bloqueados</option>
+            </select>
+          </label>
+          <!-- Só aparece com o filtro em Bloqueados: excluir em massa é
+               irreversível, e não deve estar ao alcance de um clique distraído
+               em qualquer tela. -->
+          <button class="btn btn-danger btn-sm" id="btn-excluir-bloqueadas" type="button" hidden>Excluir bloqueadas</button>
+          <label class="sel-wrap"><span class="sel-lbl">Ordenar</span>
+            <select id="ordem" aria-label="Ordenar usuários">
+              <option value="recentes">Mais recentes</option>
+              <option value="antigos">Mais antigos</option>
+              <option value="nome">Nome</option>
+              <option value="acesso">Último acesso</option>
+              <option value="uso-desc">Maior uso</option>
+              <option value="uso-asc">Menor uso</option>
+              <option value="plano">Plano</option>
+            </select>
+          </label>
+          <label class="sel-wrap"><span class="sel-lbl">Por página</span>
+            <select id="porpagina" aria-label="Itens por página">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+        </div>
+        <div id="lista-usuarios"></div>
+        <div class="paginacao" id="paginacao"></div>
+      </section>
+
+      <!-- ── ASSINATURAS ── -->
+      <section class="secao" data-secao="assinaturas">
+        <div class="toolbar">
+          <label class="sel-wrap"><span class="sel-lbl">Mostrar</span>
+            <select id="filtro-assin" aria-label="Filtrar assinaturas">
+              <option value="todas">Todas as Premium</option>
+              <option value="ativas">Ativas</option>
+              <option value="vencendo">Vencendo em 7 dias</option>
+              <option value="vencidas">Vencidas</option>
+              <option value="semprazo">Sem prazo</option>
+            </select>
+          </label>
+          <!-- Conceder estava só dentro do menu ⋮ de cada linha, o que exige
+               achar antes a pessoa numa tabela. Aqui a ação vem primeiro e a
+               pessoa é escolhida depois, que é a ordem de quem quer conceder. -->
+          <button class="btn btn-primary" id="btn-conceder" type="button">＋ Conceder Premium</button>
+        </div>
+        <div id="lista-assinaturas"></div>
+      </section>
+
+      <!-- ── REPORTES ── -->
+      <section class="secao" data-secao="reportes">
+        <div class="toolbar reportes-toolbar">
+          <div class="campo-busca">
+            <span class="busca-ico" aria-hidden="true">⌕</span>
+            <input id="busca-reportes" type="search"
+                   placeholder="Buscar por título, descrição, @ ou e-mail…"
+                   autocomplete="off" aria-label="Buscar reportes">
+          </div>
+          <label class="sel-wrap"><span class="sel-lbl">Status</span>
+            <select id="filtro-reportes-status" aria-label="Filtrar reportes por status">
+              <option value="todos">Todos</option>
+              <option value="open">Abertos</option>
+              <option value="in_progress">Em análise</option>
+              <option value="resolved">Resolvidos</option>
+            </select>
+          </label>
+          <label class="sel-wrap"><span class="sel-lbl">Categoria</span>
+            <select id="filtro-reportes-categoria" aria-label="Filtrar reportes por categoria">
+              <option value="todas">Todas</option>
+              <option value="bug">Bug</option>
+              <option value="problem">Problema</option>
+            </select>
+          </label>
+          <span class="reportes-contador" id="reportes-contador" aria-live="polite"></span>
+        </div>
+        <div id="lista-reportes"></div>
+      </section>
+
+      <!-- ── ADMINISTRADORES ── -->
+      <section class="secao" data-secao="admins">
+        <div id="lista-admins"></div>
+      </section>
+
+      <!-- ── ATIVIDADE ── -->
+      <section class="secao" data-secao="atividade">
+        <div id="lista-atividade"></div>
+      </section>
+
+      <!-- ── CONFIGURAÇÕES ── -->
+      <section class="secao" data-secao="config">
+        <div id="conteudo-config"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Painel lateral de detalhes -->
+<div class="drawer-scrim" id="drawer-scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-label="Detalhes do usuário" aria-modal="true">
+  <div class="drawer-hd">
+    <h2 id="drawer-titulo">Usuário</h2>
+    <button class="icon-btn" id="drawer-fechar" type="button" aria-label="Fechar detalhes">✕</button>
+  </div>
+  <div class="drawer-bd" id="drawer-bd"></div>
+</aside>
+
+<!-- Modal de confirmação / formulário -->
+<div class="modal-scrim" id="modal-scrim" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <h2 class="modal-titulo" id="modal-titulo"></h2>
+    <div class="modal-bd" id="modal-bd"></div>
+    <div class="modal-pe">
+      <button class="btn" id="modal-cancelar" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="modal-ok" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="premium-alerts" id="premium-alerts" aria-live="assertive" aria-atomic="false"></div>
+
+<script src="../js/i18n.js?v=9"></script>
+<script src="admin.js?v=13"></script>
+</body>
+</html>

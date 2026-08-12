@@ -1,0 +1,77 @@
+{
+  "outputDirectory": "docs",
+  "functions": {
+    "api/admin.js": {
+      "maxDuration": 60
+    },
+    "api/ia.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/brasil",
+      "destination": "/api/form?acao=brasil"
+    },
+    {
+      "source": "/api/admin-users",
+      "destination": "/api/admin?rota=admin-users"
+    },
+    {
+      "source": "/api/set-plan",
+      "destination": "/api/admin?rota=set-plan"
+    },
+    {
+      "source": "/api/set-admin",
+      "destination": "/api/admin?rota=set-admin"
+    },
+    {
+      "source": "/api/delete-user",
+      "destination": "/api/admin?rota=delete-user"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://accounts.google.com https://*.firebaseio.com https://cloud.umami.is https://plausible.io https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https://ice6.somafm.com https://somafm.com; worker-src 'self' blob:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://accounts.google.com https://mydesk-eta.vercel.app https://ipapi.co https://ice6.somafm.com https://somafm.com https://graph.microsoft.com https://login.microsoftonline.com https://cloud.umami.is https://plausible.io https://www.google-analytics.com; frame-src 'self' https://mydesk-ad0da.firebaseapp.com https://accounts.google.com https://login.microsoftonline.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, Stripe-Signature"
+        }
+      ]
+    }
+  ]
+}

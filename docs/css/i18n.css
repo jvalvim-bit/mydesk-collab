@@ -1,0 +1,193 @@
+/* Seletor de idioma compartilhado — landing, login, formulário e app. */
+[data-language-selector] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  z-index: 1900;
+}
+
+.i18n-selector {
+  position: relative;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.i18n-trigger {
+  min-width: 62px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, .11);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, .055);
+  color: rgba(255, 255, 255, .78);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .2), inset 0 1px rgba(255, 255, 255, .04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.i18n-trigger:hover,
+.i18n-selector.is-open .i18n-trigger {
+  color: #fff;
+  border-color: rgba(129, 140, 248, .44);
+  background: rgba(99, 102, 241, .14);
+}
+
+.i18n-trigger:active { transform: translateY(1px); }
+.i18n-trigger:focus-visible {
+  outline: 2px solid rgba(165, 180, 252, .8);
+  outline-offset: 3px;
+}
+
+.i18n-current-flag,
+.i18n-option-flag {
+  font-size: 1.05rem;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  filter: saturate(.92);
+}
+
+.i18n-current-code {
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.i18n-trigger svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .55;
+  transition: transform .2s ease;
+}
+
+.i18n-selector.is-open .i18n-trigger svg { transform: rotate(180deg); }
+
+.i18n-menu {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  width: 220px;
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 14px;
+  background: rgba(13, 13, 18, .97);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, .58), inset 0 1px rgba(255, 255, 255, .04);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-7px) scale(.98);
+  transform-origin: top right;
+  transition: opacity .18s ease, visibility .18s ease, transform .22s cubic-bezier(.16, 1, .3, 1);
+}
+
+.i18n-selector.is-open .i18n-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+.i18n-menu button {
+  width: 100%;
+  min-height: 43px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(245, 245, 247, .68);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+
+.i18n-menu button:hover,
+.i18n-menu button:focus-visible {
+  outline: none;
+  color: #fff;
+  background: rgba(255, 255, 255, .075);
+}
+
+.i18n-menu button.is-active {
+  color: #e0e7ff;
+  background: rgba(99, 102, 241, .14);
+}
+
+.i18n-option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .78rem;
+  font-weight: 550;
+}
+
+.i18n-option-check {
+  color: #a5b4fc;
+  opacity: 0;
+  font-size: .78rem;
+}
+
+.i18n-menu button.is-active .i18n-option-check { opacity: 1; }
+
+/* Posições específicas mantêm o mesmo componente sem duplicar lógica. */
+.nav > [data-language-selector] { margin-left: -10px; }
+#toolbar > [data-language-selector] .i18n-trigger { height: 32px; min-width: 55px; border-radius: 8px; }
+#toolbar > [data-language-selector] .i18n-menu { top: calc(100% + 13px); }
+body.login-page > [data-language-selector] {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+}
+.pf-brandbar > [data-language-selector] { margin-left: auto; }
+.pf-brandbar > [data-language-selector] + .pf-seguro { margin-left: 4px; }
+
+@media (max-width: 620px) {
+  .i18n-current-code { display: none; }
+  .i18n-trigger { min-width: 40px; width: 40px; padding: 0; gap: 0; }
+  .i18n-trigger svg { display: none; }
+  .i18n-menu { position: fixed; top: 66px; right: 12px; width: min(220px, calc(100vw - 24px)); }
+  .nav > [data-language-selector] { margin-left: 0; }
+  .pf-brandbar .i18n-menu { top: 68px; }
+}
+
+/* A cópia em inglês costuma ser mais larga. A navegação pública conserva
+   idioma, entrar e cadastro mesmo nos 360px sem criar rolagem horizontal. */
+@media (max-width: 760px) {
+  .nav > .nav-links { display: none !important; }
+  .nav {
+    gap: 7px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  .nav-signin { padding-left: 5px !important; padding-right: 5px !important; }
+  .nav-cta {
+    width: min(115px, 31vw);
+    padding: 8px 7px !important;
+    font-size: .7rem !important;
+    line-height: 1.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .i18n-trigger,
+  .i18n-trigger svg,
+  .i18n-menu { transition: none !important; }
+}

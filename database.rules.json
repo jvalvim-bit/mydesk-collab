@@ -1,0 +1,733 @@
+{
+  "rules": {
+    ".read":  "auth != null && auth.token.admin === true",
+    ".write": "auth != null && auth.token.admin === true",
+
+    "users": {
+      "$key": {
+        "profile": {
+          ".read":  "auth != null",
+          ".write": "auth != null && (auth.uid === $key || root.child('uids').child(auth.uid).val() === $key)",
+          "photo": {
+            ".validate": "!newData.exists() || (newData.isString() && newData.val().length < 500000 && (newData.val().matches(/^https:\\/\\/[^\"'<>\\s]*$/) || newData.val().matches(/^data:image\\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\\/=]*$/)))"
+          }
+        },
+        // Teto de tamanho nas notas: sem isto um usuário autenticado enche o banco
+        // (e a fatura) escrevendo strings gigantes. 7 MB em base64 ≈ os 5 MB por
+        // arquivo que o app já permite no upload.
+        "notes": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key",
+          // Índices que o cron de lembretes usa para pedir SÓ o que vence na
+          // janela, em vez de baixar as notas inteiras (com anexos) de todo mundo
+          ".indexOn": ["end", "dueDate"],
+          "$noteId": {
+            "$campo": { ".validate": "!newData.isString() || newData.val().length <= 20000" },
+            "files": {
+              "$i": {
+                "$campo": { ".validate": "!newData.isString() || newData.val().length <= 7340032" }
+              }
+            }
+          }
+        },
+        "online": {
+          ".read":  "auth != null",
+          ".write": "auth != null && (auth.uid === $key || root.child('uids').child(auth.uid).val() === $key)"
+        },
+        "groups": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key"
+        },
+        "personalBoards": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key",
+          "$boardId": {
+            "notes": {
+              ".indexOn": ["end", "dueDate"],
+              "$noteId": {
+                "$campo": { ".validate": "!newData.isString() || newData.val().length <= 20000" },
+                "files": {
+                  "$i": {
+                    "$campo": { ".validate": "!newData.isString() || newData.val().length <= 7340032" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "personalBoardsMeta": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key"
+        },
+
+        // Comentários das notas do board pessoal (padrão e nomeado dividem este
+        // nó — o id da nota é único entre eles). Nó NOVO sob users/$key: precisa
+        // de regra própria, porque não existe $other aqui que o cubra — sem
+        // isto ele cairia na raiz, que exige auth.token.admin, e o recurso
+        // responderia "permission denied" para todo usuário comum.
+        "noteComments": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key",
+          "$noteId": {
+            "$comentId": {
+              ".validate": "newData.hasChildren(['por','texto','ts'])",
+              "texto":  { ".validate": "newData.isString() && newData.val().length <= 600" },
+              "$campo": { ".validate": "!newData.isString() || newData.val().length <= 120" }
+            }
+          }
+        },
+
+        // Painel pessoal: orçamento, despesas, tarefas do mês e a agenda do
+        // calendário. NÃO TINHA REGRA — caía na raiz, que exige
+        // auth.token.admin, então o painel inteiro respondia "permission
+        // denied" para todo usuário comum. Passou despercebido porque quem
+        // testava era administradora, e para ela a raiz liberava tudo.
+        // O nó é do dono e de mais ninguém.
+        "personal": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key",
+          // Teto de tamanho: este nó guarda texto curto (nome de despesa,
+          // título de compromisso), não deve virar depósito.
+          "$secao": {
+            "$item": {
+              "$campo": { ".validate": "!newData.isString() || newData.val().length <= 500" }
+            }
+          }
+        },
+
+        // O plano é dinheiro: só o servidor (webhook da Stripe, que usa a service account e ignora
+        // estas regras) concede 'premium'. O cliente escreve apenas o contador de notas e pode
+        // rebaixar-se para 'free' quando expira. Antes disso, qualquer usuário virava premium com uma
+        // linha no console.
+        "plan": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key",
+          "plan": {
+            ".validate": "newData.val() === 'free' || (newData.val() === 'premium' && data.val() === 'premium' && newData.parent().child('planExpiresAt').val() === data.parent().child('planExpiresAt').val())"
+          },
+          "planExpiresAt":    { ".validate": "newData.val() === data.val()" },
+          "planActivatedAt":  { ".validate": "newData.val() === data.val()" },
+          "lastChargeId":     { ".validate": "newData.val() === data.val()" },
+          // O contador é o limite do plano gratuito: se pudesse ser zerado à
+          // vontade, o limite de 30 notas não valeria nada. Ele só pode subir de
+          // 1 em 1, ou voltar a zero quando o último reset (carimbado pelo
+          // servidor em lastResetAt, não pelo relógio do cliente) tem mais de 27
+          // dias. Contas antigas, sem lastResetAt, podem zerar uma vez.
+          // Zerar EXIGE carimbar lastResetAt com a hora do servidor na mesma
+          // escrita. Sem essa exigência bastava nunca gravar o carimbo para
+          // poder zerar o contador sempre — foi o que o teste de invasão pegou.
+          "notesCreatedThisMonth": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && (!data.exists() || newData.val() === data.val() || newData.val() === data.val() + 1 || (newData.val() === 0 && newData.parent().child('lastResetAt').val() === now && (!data.parent().child('lastResetAt').exists() || data.parent().child('lastResetAt').val() + 2332800000 < now)))"
+          },
+          "lastReset":        { ".validate": "newData.isString() && newData.val().length <= 7" },
+          "lastResetAt":      { ".validate": "newData.val() === now || newData.val() === data.val()" },
+          // Campo desconhecido só passa se vier igual ao que já está gravado: barra
+          // invenção de campo novo pelo cliente sem quebrar quem tenha algum campo
+          // legado no nó (o reset mensal reescreve o objeto inteiro).
+          "$outro":           { ".validate": "newData.val() === data.val()" }
+        },
+
+        "isAdmin": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": false
+        },
+
+        // O perfil precisa ser legível por qualquer logado (é o que faz a busca
+        // por @ e a lista de amigos funcionarem), e regra de leitura no Firebase
+        // cascateia — não dá para esconder só um campo. Então o e-mail sai do
+        // perfil e vem para cá, onde só o dono (e o admin, pela regra raiz) lê.
+        "private": {
+          ".read":  "auth != null && auth.uid === $key",
+          ".write": "auth != null && auth.uid === $key",
+          "email":  { ".validate": "!newData.isString() || newData.val().length <= 254" },
+          "$outro": { ".validate": "!newData.isString() || newData.val().length <= 2000" }
+        }
+      }
+    },
+
+    "presence": {
+      "$uid": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+
+    // Presença por nota e autodelegação vivem fora do card: os saves de notas
+    // usam set() integral e não podem apagar o estado de outro participante.
+    // No 1:1 o par usa UIDs em níveis separados, sem o delimitador "__" dos
+    // usernames, evitando colisão entre nomes que já contenham sublinhados.
+    "noteCollaboration": {
+      "shared": {
+        "$uidA": {
+          "$uidB": {
+            "$boardKey": {
+              ".read": "auth != null && (auth.uid === $uidA || auth.uid === $uidB) && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+              "presence": {
+                "$noteId": {
+                  ".write": "auth != null && !newData.exists() && !root.child('shared_boards').child($boardKey).child('notes').child($noteId).exists() && (auth.uid === $uidA || auth.uid === $uidB) && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists() && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+                  "$uid": {
+                    ".write": "auth != null && !newData.exists() && auth.uid === $uid && (auth.uid === $uidA || auth.uid === $uidB) && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+                    "$sessionId": {
+                      ".write": "auth != null && auth.uid === $uid && (auth.uid === $uidA || auth.uid === $uidB) && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/) && $sessionId.matches(/^[A-Za-z0-9_-]{1,40}$/) && (!newData.exists() || (root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists() && root.child('shared_boards').child($boardKey).child('notes').child($noteId).exists()))",
+                      ".validate": "!newData.exists() || newData.hasChildren(['username','state','ts'])",
+                      "username": {
+                        ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+                      },
+                      "state": {
+                        ".validate": "newData.isString() && (newData.val() === 'editing' || newData.val() === 'moving' || newData.val() === 'viewing')"
+                      },
+                      "ts": {
+                        ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+                      },
+                      "$other": { ".validate": false }
+                    }
+                  }
+                }
+              },
+              "delegated": {
+                "$noteId": {
+                  ".write": "auth != null && !newData.exists() && !root.child('shared_boards').child($boardKey).child('notes').child($noteId).exists() && (auth.uid === $uidA || auth.uid === $uidB) && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists() && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+                  "$uid": {
+                    ".write": "auth != null && (auth.uid === $uidA || auth.uid === $uidB) && ($uid === $uidA || $uid === $uidB) && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists() && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child($uid).val()).exists() && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/) && (!newData.exists() || root.child('shared_boards').child($boardKey).child('notes').child($noteId).exists())",
+                    ".validate": "!newData.exists() || newData.hasChildren(['username','assignedBy','ts'])",
+                    "username": {
+                      ".validate": "newData.isString() && newData.val() === root.child('uids').child($uid).val()"
+                    },
+                    "assignedBy": {
+                      ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+                    },
+                    "ts": {
+                      ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+                    },
+                    "$other": { ".validate": false }
+                  }
+                }
+              },
+              // Delegação de PASTA. Nó separado do de notas porque a âncora é
+              // outra: aqui a existência é conferida em stacks/, onde vivem
+              // título, cor e largura da pasta. Sem uma âncora, delegar viraria
+              // escrita livre sob qualquer id inventado.
+              "delegatedFolders": {
+                "$stackId": {
+                  ".write": "auth != null && !newData.exists() && !root.child('shared_boards').child($boardKey).child('stacks').child($stackId).exists() && (auth.uid === $uidA || auth.uid === $uidB) && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists() && $stackId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+                  "$uid": {
+                    ".write": "auth != null && (auth.uid === $uidA || auth.uid === $uidB) && ($uid === $uidA || $uid === $uidB) && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child(auth.uid).val()).exists() && root.child('shared_boards').child($boardKey).child('members').child(root.child('uids').child($uid).val()).exists() && $stackId.matches(/^[A-Za-z0-9_-]{1,40}$/) && (!newData.exists() || root.child('shared_boards').child($boardKey).child('stacks').child($stackId).exists())",
+                    ".validate": "!newData.exists() || newData.hasChildren(['username','assignedBy','ts'])",
+                    "username": {
+                      ".validate": "newData.isString() && newData.val() === root.child('uids').child($uid).val()"
+                    },
+                    "assignedBy": {
+                      ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+                    },
+                    "ts": {
+                      ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+                    },
+                    "$other": { ".validate": false }
+                  }
+                }
+              },
+              "$other": { ".read": false, ".write": false }
+            }
+          }
+        }
+      },
+      "groups": {
+        "$groupId": {
+          ".read": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+          "presence": {
+            "$noteId": {
+              ".write": "auth != null && !newData.exists() && !root.child('group_boards').child($groupId).child('notes').child($noteId).exists() && (root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+              "$uid": {
+                ".write": "auth != null && !newData.exists() && (auth.uid === $uid || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+                "$sessionId": {
+                  ".write": "auth != null && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/) && $sessionId.matches(/^[A-Za-z0-9_-]{1,40}$/) && ((!newData.exists() && (auth.uid === $uid || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val())) || (auth.uid === $uid && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() && root.child('group_boards').child($groupId).child('notes').child($noteId).exists()))",
+                  ".validate": "!newData.exists() || newData.hasChildren(['username','state','ts'])",
+                  "username": {
+                    ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+                  },
+                  "state": {
+                    ".validate": "newData.isString() && (newData.val() === 'editing' || newData.val() === 'moving' || newData.val() === 'viewing')"
+                  },
+                  "ts": {
+                    ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+                  },
+                  "$other": { ".validate": false }
+                }
+              }
+            }
+          },
+          "delegated": {
+            "$noteId": {
+              ".write": "auth != null && !newData.exists() && !root.child('group_boards').child($groupId).child('notes').child($noteId).exists() && (root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+              "$uid": {
+                ".write": "auth != null && $noteId.matches(/^[A-Za-z0-9_-]{1,40}$/) && (root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) && (root.child('groups').child($groupId).child('members').child(root.child('uids').child($uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child($uid).val()) && (!newData.exists() || root.child('group_boards').child($groupId).child('notes').child($noteId).exists())",
+                ".validate": "!newData.exists() || newData.hasChildren(['username','assignedBy','ts'])",
+                "username": {
+                  ".validate": "newData.isString() && newData.val() === root.child('uids').child($uid).val()"
+                },
+                "assignedBy": {
+                  ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+                },
+                "ts": {
+                  ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+                },
+                "$other": { ".validate": false }
+              }
+            }
+          },
+          // Ver o comentário do mesmo nó em shared: a pasta é ancorada em
+          // stacks/, não em notes/.
+          "delegatedFolders": {
+            "$stackId": {
+              ".write": "auth != null && !newData.exists() && !root.child('group_boards').child($groupId).child('stacks').child($stackId).exists() && (root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) && $stackId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+              "$uid": {
+                ".write": "auth != null && $stackId.matches(/^[A-Za-z0-9_-]{1,40}$/) && (root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) && (root.child('groups').child($groupId).child('members').child(root.child('uids').child($uid).val()).exists() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child($uid).val()) && (!newData.exists() || root.child('group_boards').child($groupId).child('stacks').child($stackId).exists())",
+                ".validate": "!newData.exists() || newData.hasChildren(['username','assignedBy','ts'])",
+                "username": {
+                  ".validate": "newData.isString() && newData.val() === root.child('uids').child($uid).val()"
+                },
+                "assignedBy": {
+                  ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+                },
+                "ts": {
+                  ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+                },
+                "$other": { ".validate": false }
+              }
+            }
+          },
+          "$other": { ".read": false, ".write": false }
+        }
+      },
+      "$other": { ".read": false, ".write": false }
+    },
+
+    "usernames": {
+      "$username": {
+        ".read":  true,
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid)",
+        ".validate": "newData.val() === auth.uid && $username.matches(/^[a-z0-9_]{3,20}$/) && !$username.contains('__')"
+      }
+    },
+
+    // uids/{uid} = @ do usuário e é a base de TODAS as outras regras (inbox, chats, grupos,
+    // boards). Quando dava para reescrever esse valor, bastava apontá-lo para o @ de outra pessoa
+    // para ler a caixa de entrada, os chats e os boards dela — e sobrescrever o perfil. Agora só
+    // pode ser criado uma vez e apenas com um @ que já esteja reservado para este uid em
+    // usernames/.
+    "uids": {
+      "$uid": {
+        ".read":  "auth != null",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('usernames').child(newData.val()).val() === auth.uid",
+        ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 20"
+      }
+    },
+
+    "friends": {
+      "$username": {
+        ".read":  "auth != null",
+        ".write": "auth != null && root.child('uids').child(auth.uid).val() === $username",
+        "$bucket": {
+          "$other": {
+            ".write": "auth != null && root.child('uids').child(auth.uid).val() === $other"
+          }
+        }
+      }
+    },
+
+    // Qualquer um precisa poder ENTREGAR na caixa dos outros (convite, pedido de amizade), mas
+    // antes dava para apagar a caixa inteira de alguém e para forjar o campo 'from' e se passar
+    // por outra pessoa. Agora: estranho só cria item novo e com o próprio @ no 'from';
+    // apagar/alterar é só do dono.
+    "inbox": {
+      "$username": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $username",
+        "$itemId": {
+          ".write": "auth != null && (root.child('uids').child(auth.uid).val() === $username || !data.exists())",
+          ".validate": "!newData.exists() || root.child('uids').child(auth.uid).val() === $username || (newData.hasChildren(['type','from','ts']) && newData.child('from').val() === root.child('uids').child(auth.uid).val())"
+        }
+      }
+    },
+
+    "groupInbox": {
+      "$username": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $username",
+        "$itemId": {
+          ".write": "auth != null && (root.child('uids').child(auth.uid).val() === $username || !data.exists())",
+          ".validate": "!newData.exists() || root.child('uids').child(auth.uid).val() === $username || (newData.hasChildren(['from']) && newData.child('from').val() === root.child('uids').child(auth.uid).val())"
+        }
+      }
+    },
+
+    // A chave é '@a__@b'. Com .contains(), quem escolhesse um @ que fosse pedaço de outro (@ria
+    // dentro de maria__joao) lia a conversa privada dos dois. beginsWith/endsWith casa o @
+    // inteiro, respeitando a fronteira do separador.
+    "chats": {
+      "$chatKey": {
+        ".read":  "auth != null && ($chatKey.beginsWith(root.child('uids').child(auth.uid).val() + '__') || $chatKey.endsWith('__' + root.child('uids').child(auth.uid).val()))",
+        ".write": "auth != null && ($chatKey.beginsWith(root.child('uids').child(auth.uid).val() + '__') || $chatKey.endsWith('__' + root.child('uids').child(auth.uid).val()))",
+        "messages": {
+          ".indexOn": "ts",
+          "$msgId": {
+            ".validate": "!newData.exists() || !newData.hasChild('from') || newData.child('from').val() === root.child('uids').child(auth.uid).val()",
+            "text":   { ".validate": "!newData.isString() || newData.val().length <= 20000" },
+            // O payload base64 corresponde exatamente a 5 MiB no Free ou
+            // 10 MiB no Premium; o cabecalho varia conforme o MIME declarado.
+            // Campos extras e payloads nao-string sao recusados no servidor.
+            "file": {
+              ".validate": "!newData.exists() || newData.hasChildren(['name','sz','type','data'])",
+              "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 255" },
+              "sz":   { ".validate": "newData.isString() && newData.val().length <= 32" },
+              "type": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+              "data": { ".validate": "newData.isString() && newData.val().beginsWith('data:' + newData.parent().child('type').val() + ';base64,') && (newData.val().length <= 6990521 + newData.parent().child('type').val().length || (newData.val().length <= 13981029 + newData.parent().child('type').val().length && (auth.token.admin === true || (root.child('users').child(auth.uid).child('plan').child('plan').val() === 'premium' && (!root.child('users').child(auth.uid).child('plan').child('planExpiresAt').exists() || root.child('users').child(auth.uid).child('plan').child('planExpiresAt').val() >= now)))))" },
+              "$campo": { ".validate": false }
+            },
+            "$campo": { ".validate": "!newData.isString() || newData.val().length <= 20000" }
+          }
+        }
+      }
+    },
+
+    // Antes qualquer MEMBRO podia reescrever o grupo inteiro — inclusive trocar o dono e apagar o
+    // grupo dos outros. Agora a raiz do grupo é do dono; membro só mexe na própria entrada de
+    // members (entrar/sair), e o dono pode remover qualquer um.
+    // Entrar num grupo exige CONVITE. Antes bastava conhecer o id do grupo para
+    // se auto-adicionar em members — inclusive quem tinha sido expulso, que
+    // voltava sozinho e reabria o acesso ao chat e ao quadro. Agora o convite é
+    // um registro em invites/{@}, gravado por quem já está dentro; a entrada
+    // consome esse convite. Sair continua livre (apagar a própria entrada).
+    "groups": {
+      "$groupId": {
+        ".read":  "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('owner').val() === root.child('uids').child(auth.uid).val())",
+        "owner": {
+          ".validate": "!data.exists() || newData.val() === data.val()"
+        },
+        "invites": {
+          "$quem": {
+            ".read":  "auth != null && ($quem === root.child('uids').child(auth.uid).val() || root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists())",
+            ".write": "auth != null && (root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() || $quem === root.child('uids').child(auth.uid).val())"
+          }
+        },
+        "photo": {
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length < 500000 && (newData.val().matches(/^https:\\/\\/[^\"'<>\\s]*$/) || newData.val().matches(/^data:image\\/(png|jpe?g|gif|webp);base64,[A-Za-z0-9+\\/=]*$/)))"
+        },
+        "members": {
+          "$member": {
+            ".write": "auth != null && ((!newData.exists() && $member === root.child('uids').child(auth.uid).val()) || (root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()) || ($member === root.child('uids').child(auth.uid).val() && root.child('groups').child($groupId).child('invites').child($member).exists()))"
+          }
+        },
+
+        // Quem entra em cada painel restrito (RH, Financeiro, Clientes).
+        //
+        // NÃO TEM `.write` PRÓPRIO, DE PROPÓSITO: quem grava aqui é a regra do
+        // `$groupId` logo acima, que já exige ser o dono do grupo. Escrever uma
+        // regra permissiva aqui só poderia AFROUXAR isso — no Realtime Database
+        // um filho soma permissão ao pai, nunca subtrai. É por isso que a
+        // delegação só pode ser mudada pelo líder mesmo sem publicar nada: a
+        // trava já estava de pé antes desta feature existir.
+        //
+        // O que este bloco acrescenta é só o FORMATO, e ele passa a valer no
+        // próximo `npm run deploy:rules`. Sem publicar, a feature funciona
+        // igual — só aceita valor fora do formato, que o app não escreve.
+        "paineis": {
+          "$painel": {
+            ".validate": "$painel === 'rh' || $painel === 'financeiro' || $painel === 'clientes'",
+            "$membro": {
+              // Só `true`. Guardar objeto aqui abriria espaço para o nó crescer
+              // sem limite dentro de um grupo que todo membro consegue ler.
+              ".validate": "newData.isBoolean() && newData.val() === true && root.child('groups').child($groupId).child('members').child($membro).exists()"
+            }
+          }
+        }
+      }
+    },
+
+    // Escrita por MENSAGEM, não na raiz: com .write no nó do grupo, qualquer
+    // membro apagava a conversa inteira num único comando (regra de escrita
+    // cascateia para os filhos, e apagar é escrever null).
+    "groupChats": {
+      "$groupId": {
+        ".read":  "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+        "messages": {
+          ".indexOn": "ts",
+          "$msgId": {
+            ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists() && (!data.exists() || data.child('from').val() === root.child('uids').child(auth.uid).val() || root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val())",
+            ".validate": "!newData.exists() || !newData.hasChild('from') || newData.child('from').val() === root.child('uids').child(auth.uid).val()",
+            "text":   { ".validate": "!newData.isString() || newData.val().length <= 20000" },
+            "file":   { "$campo": { ".validate": "!newData.isString() || newData.val().length <= 7340032" } },
+            "$campo": { ".validate": "!newData.isString() || newData.val().length <= 20000" }
+          }
+        }
+      }
+    },
+
+    "shared_boards": {
+      "$boardKey": {
+        ".read":  "auth != null && ($boardKey.beginsWith(root.child('uids').child(auth.uid).val() + '__') || $boardKey.endsWith('__' + root.child('uids').child(auth.uid).val()))",
+        ".write": "auth != null && ($boardKey.beginsWith(root.child('uids').child(auth.uid).val() + '__') || $boardKey.endsWith('__' + root.child('uids').child(auth.uid).val()))",
+        // Apelido do quadro 1:1, dado por qualquer um dos dois. Vive aqui, e não
+        // no perfil de quem renomeou, porque o quadro é dos dois — se cada lado
+        // guardasse o seu, o mesmo workspace teria dois nomes.
+        "nome": {
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 40)"
+        },
+        "atividade": {
+          // Índice para a poda: quem entra no quadro apaga o que passou de um
+          // dia consultando por ts. Sem o índice o Firebase baixaria o nó
+          // inteiro para ordenar no cliente — justamente o que a poda evita.
+          ".indexOn": "ts",
+          "$item": {
+            ".validate": "!newData.exists() || newData.hasChildren(['por','acao','ts'])",
+            "por": {
+              ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+            },
+            "acao": {
+              ".validate": "newData.isString() && (newData.val() === 'criou' || newData.val() === 'moveu' || newData.val() === 'editou' || newData.val() === 'agrupou' || newData.val() === 'cor' || newData.val() === 'removeu' || newData.val() === 'limpou' || newData.val() === 'renomeou' || newData.val() === 'pasta' || newData.val() === 'concluiu' || newData.val() === 'status' || newData.val() === 'comentou' || newData.val() === 'formulario' || newData.val() === 'resposta' || newData.val() === 'anexou' || newData.val() === 'entrou' || newData.val() === 'saiu' || newData.val() === 'renomeouWs' || newData.val() === 'delegou' || newData.val() === 'liberou' || newData.val() === 'fixou' || newData.val() === 'desafixou' || newData.val() === 'prazo' || newData.val() === 'redimensionou')"
+            },
+            "alvo": {
+              ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)"
+            },
+            "ts": {
+              ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+            },
+            "$other": { ".validate": false }
+          }
+        },
+        // Comentários das notas do quadro 1:1. A escrita já vem do nó pai (os
+        // dois participantes escrevem no quadro inteiro); aqui só se limita o
+        // formato e o tamanho, para o nó não virar depósito de texto.
+        "comentarios": {
+          "$noteId": {
+            "$comentId": {
+              ".validate": "newData.hasChildren(['por','texto','ts'])",
+              "texto":  { ".validate": "newData.isString() && newData.val().length <= 600" },
+              "$campo": { ".validate": "!newData.isString() || newData.val().length <= 120" }
+            }
+          }
+        },
+        "notes": {
+          "$noteId": {
+            "$campo": { ".validate": "!newData.isString() || newData.val().length <= 20000" },
+            "delegated": {
+              ".validate": "!newData.exists()"
+            },
+            "files": { "$i": { "$campo": { ".validate": "!newData.isString() || newData.val().length <= 7340032" } } }
+          }
+        }
+      }
+    },
+
+    // Mesma ideia: a raiz do quadro (apagar tudo, encerrar o workspace) é do
+    // DONO; membro escreve em nota, arquivo e status — colaboração continua,
+    // mas ninguém apaga o quadro inteiro dos outros de uma vez.
+    "group_boards": {
+      "$groupId": {
+        ".read":  "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+        ".write": "auth != null && root.child('groups').child($groupId).child('owner').val() === root.child('uids').child(auth.uid).val()",
+        "status":    { ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()" },
+        "startedBy": { ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()" },
+        "files": {
+          "$noteId": {
+            "$fileId": { ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()" }
+          }
+        },
+        // Feed de atividade do quadro: quem criou, moveu ou renomeou o quê.
+        // Mesma permissão das notas — quem edita o quadro pode registrar o que
+        // fez. O app mantém só as últimas entradas; o teto de tamanho evita que
+        // alguém use este nó como armazenamento.
+        "atividade": {
+          ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+          // Ver o comentário do mesmo nó em shared_boards: índice usado pela
+          // poda que apaga o que passou de um dia.
+          ".indexOn": "ts",
+          "$item": {
+            ".validate": "!newData.exists() || newData.hasChildren(['por','acao','ts'])",
+            "por": {
+              ".validate": "newData.isString() && newData.val() === root.child('uids').child(auth.uid).val()"
+            },
+            "acao": {
+              ".validate": "newData.isString() && (newData.val() === 'criou' || newData.val() === 'moveu' || newData.val() === 'editou' || newData.val() === 'agrupou' || newData.val() === 'cor' || newData.val() === 'removeu' || newData.val() === 'limpou' || newData.val() === 'renomeou' || newData.val() === 'pasta' || newData.val() === 'concluiu' || newData.val() === 'status' || newData.val() === 'comentou' || newData.val() === 'formulario' || newData.val() === 'resposta' || newData.val() === 'anexou' || newData.val() === 'entrou' || newData.val() === 'saiu' || newData.val() === 'renomeouWs' || newData.val() === 'delegou' || newData.val() === 'liberou' || newData.val() === 'fixou' || newData.val() === 'desafixou' || newData.val() === 'prazo' || newData.val() === 'redimensionou')"
+            },
+            "alvo": {
+              ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 60)"
+            },
+            "ts": {
+              ".validate": "newData.isNumber() && newData.val() >= now - 60000 && newData.val() <= now + 10000"
+            },
+            "$other": { ".validate": false }
+          }
+        },
+        // Título, cor e largura das pastas do quadro. Sem esta regra só o dono
+        // escreveria aqui (a raiz de group_boards é dele), e renomear uma pasta
+        // não chegaria em ninguém — que é o motivo de os metadados terem saído
+        // do localStorage para cá.
+        "stacks": {
+          ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+          "$chave": { ".validate": "!newData.isString() || newData.val().length <= 200" }
+        },
+        // Comentários das notas do quadro de grupo. Precisa de .write própria
+        // pelo mesmo motivo de stacks: a raiz de group_boards é do DONO, então
+        // sem esta regra só ele conseguiria comentar. Apagar comentário dos
+        // outros é barrado no app; aqui a regra vale para todo membro, como em
+        // notes — a alternativa exigiria comparar o autor gravado, e a mesma
+        // frouxidão já existe no resto do quadro.
+        "comentarios": {
+          ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+          "$noteId": {
+            "$comentId": {
+              ".validate": "newData.hasChildren(['por','texto','ts'])",
+              "texto":  { ".validate": "newData.isString() && newData.val().length <= 600" },
+              "$campo": { ".validate": "!newData.isString() || newData.val().length <= 120" }
+            }
+          }
+        },
+        "notes": {
+          "$noteId": {
+            ".write": "auth != null && root.child('groups').child($groupId).child('members').child(root.child('uids').child(auth.uid).val()).exists()",
+            "$campo": { ".validate": "!newData.isString() || newData.val().length <= 20000" },
+            "delegated": {
+              ".validate": "!newData.exists()"
+            },
+            "files": { "$i": { "$campo": { ".validate": "!newData.isString() || newData.val().length <= 7340032" } } }
+          }
+        }
+      }
+    },
+
+    // Formulários públicos. O nó fica fechado para o navegador de quem NÃO é o
+    // dono — inclusive para quem vai responder, que nem conta tem. A página
+    // pública lê a definição e grava a resposta pela função /api/form, que usa
+    // a service account (ela ignora estas regras). Foi de propósito: abrir
+    // leitura ou escrita a "todo mundo" aqui não distinguiria o cliente
+    // respondendo de alguém varrendo o banco.
+    "forms": {
+      "$formId": {
+        ".read":  "auth != null && data.child('owner').val() === auth.uid",
+        ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid) || data.child('owner').val() === auth.uid)",
+        // O dono nunca muda: sem isto, quem criasse o formulário poderia
+        // apontá-lo para outra pessoa e o dono real perderia o acesso.
+        "owner":     { ".validate": "newData.val() === auth.uid && (!data.exists() || newData.val() === data.val())" },
+        "titulo":    { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "descricao": { ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 400)" },
+        "campos": {
+          "$i": {
+            "rotulo": { ".validate": "!newData.isString() || newData.val().length <= 120" },
+            "$campo": { ".validate": "!newData.isString() || newData.val().length <= 200" }
+          }
+        },
+        // As respostas são gravadas pela função. O dono lê e pode apagar (a
+        // regra de escrita do nó pai alcança este ramo); o teto de tamanho vale
+        // só para o navegador — a service account não passa por validate.
+        "respostas": {
+          "$respostaId": {
+            "valores": { "$campoId": { ".validate": "!newData.isString() || newData.val().length <= 4000" } },
+            "arquivo": { "$campo":   { ".validate": "!newData.isString() || newData.val().length <= 2000000" } }
+          }
+        }
+      }
+    },
+
+    // ═══════════════════════════════════════════════════════════════
+    // LEMBRETES POR E-MAIL
+    // ═══════════════════════════════════════════════════════════════
+    // reminderJobs é a fila que o Cloudflare Worker consulta de cinco em cinco
+    // minutos. Cada entrada é minúscula e diz apenas de quem é, qual
+    // compromisso, quando começa e se está ligada.
+    //
+    // O .indexOn NÃO é detalhe de desempenho: sem ele, a consulta por
+    // nextRunAt faria o Firebase baixar a fila INTEIRA a cada rodada e filtrar
+    // depois — 288 vezes por dia. Com o índice, vem só o que venceu.
+    //
+    // Não há ".read" no nó pai: o navegador não tem por que listar a fila de
+    // todo mundo, e quem lista é a conta de serviço do Worker, que não passa
+    // por estas regras.
+    "reminderJobs": {
+      ".indexOn": ["nextRunAt"],
+      "$jobId": {
+        ".read":  "auth != null && data.child('uid').val() === auth.uid",
+        ".write": "auth != null && ((!data.exists() && newData.child('uid').val() === auth.uid) || data.child('uid').val() === auth.uid)",
+        ".validate": "!newData.exists() || newData.hasChildren(['uid','eventId','startsAt'])",
+        // O dono nunca muda: sem isto, alguém criaria job apontando para o UID
+        // de outra pessoa e o Worker mandaria e-mail para ela.
+        "uid":       { ".validate": "newData.val() === auth.uid" },
+        "eventId":   { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "startsAt":  { ".validate": "newData.isNumber()" },
+        "hasTime":   { ".validate": "newData.isBoolean()" },
+        "enabled":   { ".validate": "newData.isBoolean()" },
+        "nextRunAt": { ".validate": "newData.isNumber()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        // Endereço de e-mail NÃO entra aqui, de propósito. O destinatário sai
+        // do perfil privado do dono do UID; um campo livre nesta fila
+        // transformaria o serviço num disparador de e-mail para terceiros.
+        "$outro": { ".validate": false }
+      }
+    },
+
+    // Registro de entregas: é o que impede o mesmo aviso sair duas vezes.
+    // Fechado ao navegador nos dois sentidos — quem escreve é a conta de
+    // serviço do Worker, que ignora regras. Se o navegador pudesse apagar uma
+    // entrada aqui, poderia forçar o reenvio de qualquer e-mail.
+    "reminderDeliveries": {
+      // Índice em status: o Worker pergunta pelas entregas que ainda não têm
+      // desfecho para consultar a Resend. Sem ele, baixaria o registro inteiro
+      // a cada rodada — o oposto do que esta arquitetura busca.
+      ".indexOn": ["status"],
+      ".read": false,
+      ".write": false
+    },
+
+    // Indicações: referrals/{@doIndicador}/{uidDoNovoUsuario}. Só o dono do @ lê a própria lista;
+    // cada novo usuário só consegue criar a própria aresta, uma única vez (o !data.exists() impede
+    // reescrever/inflar contador).
+    "referrals": {
+      "$code": {
+        ".read": "auth != null && root.child('uids').child(auth.uid).val() === $code",
+        "$uid": {
+          ".write":    "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.hasChildren(['at','username'])"
+        }
+      }
+    },
+
+    // Registro de ações administrativas. Escrito exclusivamente pelas funções da
+    // Vercel — a service account ignora as regras, então não precisa de permissão
+    // aqui. A leitura é do administrador, concedida pela regra da raiz; para o
+    // usuário comum a raiz nega e este nó não abre nada.
+    //
+    // LIMITE CONHECIDO, dito de propósito: o ".write" da raiz também alcança um
+    // administrador, então este registro não é à prova de adulteração por quem já
+    // é admin. Tornar imutável exigiria trocar a concessão ampla da raiz por
+    // permissões nó a nó — mudança grande, que mexeria em todas as telas do app.
+    // O ".validate" abaixo ao menos impede que uma entrada malformada entre pelo
+    // navegador (a service account não é afetada por validate).
+    "adminLog": {
+      "$entrada": {
+        ".validate": "newData.hasChildren(['at','acao','por'])"
+      }
+    },
+
+    "reports": {
+      ".indexOn": ["createdAt", "status", "reporterUid"]
+    },
+
+    "adminNotifications": {
+      ".indexOn": ["createdAt", "type"]
+    },
+    "adminNotificationReads": {
+      "$adminUid": {
+        ".read": "auth != null && auth.token.admin === true && auth.uid === $adminUid",
+        ".write": "auth != null && auth.token.admin === true && auth.uid === $adminUid"
+      }
+    },
+
+    // newsletter e os mapas internos da Stripe são escritos só pelas funções da
+    // Vercel (service account ignora regras). Para o navegador ficam fechados
+    // pela regra raiz e por $other.
+
+    "$other": {
+      ".read":  false,
+      ".write": false
+    }
+  }
+}

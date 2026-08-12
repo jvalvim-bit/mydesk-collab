@@ -1,0 +1,92 @@
+name: CI
+
+# DESLIGADO NO PUSH desde 27/07/2026.
+#
+# A conta do GitHub está travada por uma autorização de pagamento recusada, e
+# conta travada não inicia job nenhum: as verificações falhavam em 2 segundos
+# sem sequer rodar, e cada push gerava um e-mail de "Run failed". Dezenas deles
+# numa madrugada de trabalho — ruído puro, sem nenhuma informação.
+#
+# Enquanto isso não se resolve, o gatilho é manual (workflow_dispatch): dá para
+# rodar pela aba Actions quando quiser, e nada dispara sozinho. Para voltar ao
+# normal, basta descomentar o bloco `push:` abaixo.
+#
+# As mesmas cinco verificações continuam sendo feitas localmente antes de cada
+# commit — sintaxe dos .js, validade do database.rules.json e do vercel.json,
+# ausência de handler inline e de segredo versionado.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # Checagens baratas que pegam a classe de erro que já nos mordeu:
+  # arquivo que não parseia e JSON de regras inválido (um deploy de regras
+  # quebrado deixa o banco com a política anterior, sem aviso).
+  verificacoes:
+    name: Sintaxe e sanidade
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Sintaxe dos scripts do app
+        run: |
+          for f in docs/js/*.js api/*.js lib/*.js scripts/*.js test/*.js; do
+            node --check "$f" || exit 1
+          done
+
+      - name: Testes automatizados
+        run: npm test
+
+      - name: Regras do banco são JSON válido
+        run: |
+          node -e "
+            const fs = require('fs');
+            const bruto = fs.readFileSync('database.rules.json', 'utf8');
+            // as regras do RTDB aceitam comentários //, que JSON.parse não aceita
+            const limpo = bruto.replace(/^\s*\/\/.*$/gm, '');
+            JSON.parse(limpo);
+            console.log('database.rules.json OK');
+          "
+
+      - name: vercel.json é JSON válido
+        run: node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8')); console.log('vercel.json OK')"
+
+      - name: Nenhum handler inline no HTML (a CSP bloqueia)
+        run: |
+          if grep -nE 'on(click|input|change|submit)="' docs/*.html; then
+            echo "::error::handler inline encontrado — use addEventListener ou data-act"
+            exit 1
+          fi
+          echo "nenhum handler inline"
+
+      - name: Nenhum segredo versionado
+        run: |
+          if git ls-files | grep -iE 'serviceAccountKey.json|\.env$|-adminsdk-.*\.json'; then
+            echo "::error::arquivo sensível versionado"
+            exit 1
+          fi
+          echo "nenhum segredo versionado"
+
+      - name: Auditoria de dependências (informativa)
+        run: npm audit --audit-level=high || true
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v3
