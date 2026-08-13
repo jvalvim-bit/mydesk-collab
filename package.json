@@ -27,5 +27,9 @@
   ],
   "overrides": {
     "uuid": "^14.0.1"
+  },
+  "allowScripts": {
+    "@firebase/util@1.15.1": true,
+    "protobufjs@7.6.5": true
   }
 }
