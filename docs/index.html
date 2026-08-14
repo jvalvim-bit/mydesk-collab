@@ -176,58 +176,90 @@
 
 <!-- TOOLBAR -->
 <div id="toolbar" style="display:none">
-  <!-- O logo é o caminho de volta. Um clique nele leva ao quadro pessoal, de
-       onde quer que se esteja — é o gesto que todo site tem e que este não
-       tinha. `role`/`tabindex` porque quem navega por teclado precisa alcançar
-       o mesmo atalho. -->
-  <div class="t-logo" id="t-logo" role="button" tabindex="0" data-h="a80"
-       title="Voltar para o meu quadro" aria-label="Voltar para o meu quadro"><img src="img/logo-mydesk.png?v=3" alt="MyDesk"></div>
-  <div class="t-pill" id="t-pill-ws" style="cursor:pointer;user-select:none;" title="Workspaces pessoais"><span class="t-dot" id="t-ws-dot"></span><span id="t-user-label"></span><svg id="t-ws-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:.4;margin-left:3px;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg></div>
-  <div class="t-sep"></div>
-  <button class="t-btn primary" id="btn-new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova nota</button>
-  <button class="t-btn" id="btn-shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Reorganizar</button>
-  <button class="t-btn" id="btn-clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Limpar tudo</button>
-  <button class="t-btn" id="btn-restore" style="display:none;background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:#6ee7b7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Restaurar</button>
-  <button class="t-btn" id="btn-wallpaper"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Fundo</button>
-  <div class="t-sep"></div>
-  <button class="t-btn" id="btn-crm-view" title="Alternar: Notas / CRM Financeiro" data-h="a1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg><span id="crm-view-label">Clientes</span></button>
-  <button class="t-btn" id="btn-events" title="Próximos eventos" data-h="a2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Eventos<span class="t-notif-badge" id="events-badge" style="display:none"></span></button>
-  <div class="t-spacer"></div>
-  <span class="t-count" id="t-count">0 notas</span>
-  <div class="t-sep"></div>
-  <button class="t-btn" id="btn-social" title="Amigos &amp; Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Amigos<span class="t-notif-badge" id="social-badge"></span></button>
-  <div class="t-sep"></div>
-  <!-- Botão "Resumo da semana" retirado em 27/07/2026. O resumo de anexo
-       (botão no visualizador de arquivo) continua funcionando. -->
-  <div id="ws-toolbar-btn"></div>
-  <div class="t-sep"></div>
-  <button class="t-btn" id="btn-ws-lista" data-h="a4" title="Workspaces compartilhados"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Workspaces<span class="t-notif-badge" id="ws-badge" style="display:none"></span></button>
-  <div class="t-sep"></div>
-  <!-- O seletor de status (disponivel/trabalhando/ocupado) vive agora so no
-       painel Amigos, ao lado do avatar, onde ja existia o mesmo controle. -->
-  <!-- ATALHOS — Admin, idioma e Sair moraram soltos aqui até 05/08/2026.
-       São três controles de uso raro ocupando largura fixa na barra, ao lado
-       dos de uso diário. Agora ficam atrás de um botão só, que os expande.
-       Eles NÃO foram recriados: os mesmos elementos, com os mesmos ids e os
-       mesmos handlers, apenas mudaram de lugar — o código que liga o Admin
-       para quem é administradora continua achando `#btn-admin`, e o seletor
-       de idioma continua se montando sozinho no host dele. -->
-  <div class="t-atalhos-host">
-    <button class="t-btn" id="btn-atalhos" data-h="a81" title="Atalhos da conta"
-            aria-haspopup="true" aria-expanded="false" aria-controls="atalhos-pop">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="15" width="7" height="5" rx="1.5"/><rect x="14" y="15" width="7" height="5" rx="1.5"/></svg><span id="atalhos-label">Atalhos</span><span class="t-kbd" id="atalhos-kbd">Ctrl K</span>
+  <!-- Duas fileiras dentro do MESMO #toolbar (não dois elementos irmãos):
+       _alturaBarra()/_minNoteY() (app.js) e outros pontos do código medem
+       #toolbar.offsetHeight para saber onde as notas e os painéis podem
+       começar. Mantendo as duas fileiras dentro do mesmo elemento, essa
+       conta continua correta sem tocar em nenhuma dessas funções. -->
+  <div class="tb-row tb-row-main">
+    <!-- O logo é o caminho de volta. Um clique nele leva ao quadro pessoal, de
+         onde quer que se esteja — é o gesto que todo site tem e que este não
+         tinha. `role`/`tabindex` porque quem navega por teclado precisa alcançar
+         o mesmo atalho. -->
+    <div class="t-logo" id="t-logo" role="button" tabindex="0" data-h="a80"
+         title="Voltar para o meu quadro" aria-label="Voltar para o meu quadro"><img src="img/logo-mydesk.png?v=3" alt="MyDesk"></div>
+    <div class="t-pill" id="t-pill-ws" style="cursor:pointer;user-select:none;" title="Workspaces pessoais"><span class="t-dot" id="t-ws-dot"></span><span id="t-user-label"></span><svg id="t-ws-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:.4;margin-left:3px;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg></div>
+    <div class="t-sep"></div>
+    <button class="t-btn primary" id="btn-new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova nota</button>
+    <button class="t-btn" id="btn-restore" style="display:none;background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.28);color:#6ee7b7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Restaurar</button>
+
+    <!-- Reorganizar / Limpar tudo / Fundo continuam os MESMOS botões de sempre
+         (mesmos ids, mesmos handlers) — só saem da fileira visível e passam a
+         ser acionados via .click() a partir do menu "⋯". Nada foi duplicado. -->
+    <button class="t-btn" id="btn-shuffle" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Reorganizar</button>
+    <button class="t-btn" id="btn-clear" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Limpar tudo</button>
+    <button class="t-btn" id="btn-wallpaper" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Fundo</button>
+
+    <div class="t-sep"></div>
+
+    <div class="t-tabs" role="tablist" aria-label="Seções">
+      <button class="t-tab" id="btn-notas" type="button" role="tab" title="Meu quadro de notas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h5m0-20h11a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H9m0-20v20"/></svg>Notas</button>
+      <button class="t-tab" id="btn-crm-view" role="tab" title="Alternar: Notas / CRM Financeiro" data-h="a1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg><span id="crm-view-label">Clientes</span></button>
+      <button class="t-tab" id="btn-events" role="tab" title="Próximos eventos" data-h="a2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Eventos<span class="t-notif-badge" id="events-badge" style="display:none"></span></button>
+    </div>
+
+    <div class="t-search-wrap">
+      <svg class="t-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="t-search-inp" id="t-search" type="text" autocomplete="off" placeholder="Buscar notas...">
+    </div>
+
+    <div class="t-spacer"></div>
+    <span class="t-count" id="t-count">0 notas</span>
+    <div class="t-sep"></div>
+
+    <button class="t-btn t-btn-icon" id="btn-toolbar-more" title="Mais ações" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
     </button>
-    <div id="atalhos-pop" class="atalhos-pop" role="menu" aria-label="Atalhos" style="display:none">
-      <button class="t-btn t-btn-admin" id="btn-admin" style="display:none;" data-h="a6" title="Painel Administrativo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin
+  </div>
+
+  <!-- Fileira secundária: Amigos, Workspaces e Atalhos, de uso menos frequente
+       que Nova nota/abas/busca — por isso mais discretos, numa fileira própria
+       abaixo da principal em vez de disputar espaço com ela. -->
+  <div class="tb-row tb-row-sub">
+    <button class="t-btn t-btn-sub" id="btn-social" title="Amigos &amp; Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Amigos<span class="t-notif-badge" id="social-badge"></span></button>
+    <div class="t-sep"></div>
+    <!-- Botão "Resumo da semana" retirado em 27/07/2026. O resumo de anexo
+         (botão no visualizador de arquivo) continua funcionando. -->
+    <div id="ws-toolbar-btn"></div>
+    <div class="t-sep"></div>
+    <button class="t-btn t-btn-sub" id="btn-ws-lista" data-h="a4" title="Workspaces compartilhados"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Workspaces<span class="t-notif-badge" id="ws-badge" style="display:none"></span></button>
+    <div class="t-sep"></div>
+    <!-- O seletor de status (disponivel/trabalhando/ocupado) vive agora so no
+         painel Amigos, ao lado do avatar, onde ja existia o mesmo controle. -->
+    <!-- ATALHOS — Admin, idioma e Sair moraram soltos aqui até 05/08/2026.
+         São três controles de uso raro ocupando largura fixa na barra, ao lado
+         dos de uso diário. Agora ficam atrás de um botão só, que os expande.
+         Eles NÃO foram recriados: os mesmos elementos, com os mesmos ids e os
+         mesmos handlers, apenas mudaram de lugar — o código que liga o Admin
+         para quem é administradora continua achando `#btn-admin`, e o seletor
+         de idioma continua se montando sozinho no host dele. -->
+    <div class="t-atalhos-host">
+      <button class="t-btn t-btn-sub" id="btn-atalhos" data-h="a81" title="Atalhos da conta"
+              aria-haspopup="true" aria-expanded="false" aria-controls="atalhos-pop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="15" width="7" height="5" rx="1.5"/><rect x="14" y="15" width="7" height="5" rx="1.5"/></svg><span id="atalhos-label">Atalhos</span><span class="t-kbd" id="atalhos-kbd">Ctrl K</span>
       </button>
-      <button class="t-btn" id="btn-invite" title="Convide amigos e ganhe Premium" data-h="a3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Convidar</button>
-      <div class="atalhos-linha">
-        <span class="atalhos-rot" id="atalhos-idioma">Idioma</span>
-        <div data-language-selector></div>
+      <div id="atalhos-pop" class="atalhos-pop" role="menu" aria-label="Atalhos" style="display:none">
+        <button class="t-btn t-btn-admin" id="btn-admin" style="display:none;" data-h="a6" title="Painel Administrativo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Admin
+        </button>
+        <button class="t-btn" id="btn-invite" title="Convide amigos e ganhe Premium" data-h="a3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Convidar</button>
+        <div class="atalhos-linha">
+          <span class="atalhos-rot" id="atalhos-idioma">Idioma</span>
+          <div data-language-selector></div>
+        </div>
+        <div class="atalhos-sep"></div>
+        <button class="t-btn atalhos-sair" id="btn-exit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</button>
       </div>
-      <div class="atalhos-sep"></div>
-      <button class="t-btn atalhos-sair" id="btn-exit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</button>
     </div>
   </div>
 </div>
@@ -421,7 +453,12 @@
   <canvas id="board-bg-canvas" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;z-index:0;"></canvas>
   <canvas id="board-pixel-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated;display:none;z-index:0;"></canvas>
   <div id="board-dots"></div>
-  <div id="empty-hint"><div class="ei-box">&#65291;</div><div class="ei-txt">Clique em "Nova nota" para comecar</div></div>
+  <div id="empty-hint">
+    <button class="eh-btn" id="btn-empty-new" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova nota
+    </button>
+  </div>
 </div>
 
 <!-- SOCIAL PANEL -->

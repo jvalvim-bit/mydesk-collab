@@ -54,6 +54,7 @@
     height: auto !important;
     min-height: var(--mb-top-h);
     padding: calc(6px + var(--mb-safe-t)) 12px 6px !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
     z-index: 1500;
@@ -62,6 +63,24 @@
     -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid rgba(255, 255, 255, .07);
   }
+
+  /* A barra desktop ganhou uma segunda fileira interna (.tb-row-main /
+     .tb-row-sub) para caber Amigos/Workspaces/Atalhos separados do resto.
+     Aqui elas precisam voltar a ser invisíveis para o layout: com
+     `display:contents` os botões de dentro passam a ser filhos diretos de
+     #toolbar de novo, exatamente como antes das duas fileiras existirem —
+     e a lista de ids escondidos abaixo continua funcionando sem mudança
+     nenhuma nela. */
+  #toolbar .tb-row-main,
+  #toolbar .tb-row-sub { display: contents; }
+
+  /* Abas (Notas/Clientes/Eventos), busca e o menu "⋯" são exclusivos da
+     barra desktop — no celular a navegação já vive em #mb-nav e na folha
+     "Mais" (mobile.js), então aqui eles somem como os demais botões. */
+  #toolbar #btn-notas,
+  #toolbar .t-tabs,
+  #toolbar .t-search-wrap,
+  #toolbar #btn-toolbar-more { display: none !important; }
 
   /* Tudo que virou navegação inferior ou item da folha "Mais" sai daqui.
      Os botões continuam no DOM, com os mesmos ids e os mesmos ouvintes —

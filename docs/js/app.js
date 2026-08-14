@@ -13153,6 +13153,42 @@ window.addEventListener('DOMContentLoaded', () => {
   $('btn-exit').addEventListener('click',    doLogout);
   $('btn-social').addEventListener('click',  toggleSocialPanel);
 
+  // Estado vazio do quadro: mesmo modal do botão "Nova nota" da barra, sem
+  // duplicar as opções (Pessoal/Cliente/Formulário/Pasta) que já vivem nele.
+  document.getElementById('btn-empty-new')?.addEventListener('click', openModal);
+
+  // Aba "Notas": única das três (Notas/Clientes/Eventos) sem uma tela própria
+  // hoje — as outras duas já se fecham sozinhas (toggleCRMView/toggleEventsPanel).
+  // Esta so devolve o quadro de notas quando uma das duas estiver aberta.
+  document.getElementById('btn-notas')?.addEventListener('click', () => {
+    if (typeof _crmMode !== 'undefined' && _crmMode) toggleCRMView();
+    document.getElementById('events-panel')?.classList.remove('open');
+  });
+
+  // Menu "⋯": Reorganizar / Limpar tudo / Fundo continuam os mesmos botões de
+  // sempre (mesmos ids e handlers) — só ficam ocultos na fileira e são
+  // acionados por .click() a partir daqui, sem duplicar lógica nenhuma.
+  document.getElementById('btn-toolbar-more')?.addEventListener('click', e => {
+    e.stopPropagation();
+    _cdashMenu(e.currentTarget, [
+      { label: 'Reorganizar', onClick: () => document.getElementById('btn-shuffle').click() },
+      { label: 'Fundo',       onClick: () => document.getElementById('btn-wallpaper').click() },
+      { label: 'Limpar tudo', danger: true, onClick: () => document.getElementById('btn-clear').click() },
+    ]);
+  });
+
+  // Busca: filtra pelo título as notas soltas no quadro (não mexe nas que
+  // estão dentro de pastas — essas já ficam escondidas por outro motivo).
+  document.getElementById('t-search')?.addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    document.querySelectorAll('#board .note').forEach(el => {
+      const n = notes.find(x => String(x.id) === el.dataset.id);
+      if (!n || n.stackId) return;
+      const titulo = (n.title || '').toLowerCase();
+      el.classList.toggle('search-hidden', q.length > 0 && !titulo.includes(q));
+    });
+  });
+
   // Personal workspace panel
   document.getElementById('t-pill-ws')?.addEventListener('click', togglePwPanel);
   document.getElementById('pw-add-btn')?.addEventListener('click', () => {
@@ -13442,6 +13478,7 @@ const WP_GRADS = [
   'linear-gradient(135deg,#ffffff,#e8e8e8,#d4d4d4)',
   'linear-gradient(135deg,#f8f8f8,#e2e8f0,#f0f4f8)',
   'linear-gradient(135deg,#ffffff,#f5f0ff,#e8f4fd)',
+  'radial-gradient(900px 620px at 0% 0%,rgba(20,184,166,.14),transparent 60%),radial-gradient(900px 620px at 100% 100%,rgba(99,102,241,.16),transparent 60%),#0a0a0c',
 ];
 
 /* Fundo padrão do MyDesk: é o que toda conta nova encontra no primeiro acesso
@@ -13449,7 +13486,7 @@ const WP_GRADS = [
    nenhum gradiente daqui é do Premium, ao contrário da maioria dos vídeos e de parte da
    pixel art. Se um dia virar um fundo pago, a conta gratuita nasceria com um
    fundo que ela não pode manter e cairia no reset no primeiro carregamento. */
-const WP_DEFAULT = { type: 'gradient', value: WP_GRADS[5], key: 'grad_5' };
+const WP_DEFAULT = { type: 'gradient', value: WP_GRADS[16], key: 'grad_16' };
 
 let wpPanelOpen = false;
 let activeWpKey = null; // tracks which swatch is active
@@ -14884,14 +14921,26 @@ function resetWallpaper() {
   applyWallpaper({ ...WP_DEFAULT });
 }
 
+let _wpJustOpened = false;
 function toggleWpPanel() {
   wpPanelOpen = !wpPanelOpen;
   document.getElementById('wp-panel').classList.toggle('open', wpPanelOpen);
+  if (wpPanelOpen) {
+    /* #btn-wallpaper agora também é acionado por proxy (menu "⋯" da barra,
+       folha "Mais" do mobile): quem clicou de verdade foi outro elemento, que
+       continua propagando o mesmo clique até aqui DEPOIS deste toggle. Sem
+       este adiamento, o listener de "clique fora" via de baixo via o alvo
+       original (não é o botão nem o painel) e fechava o painel no mesmo
+       instante em que abriu — mesmo truque que _closeSortOnOutside já usa
+       para o painel de Reorganizar. */
+    _wpJustOpened = true;
+    setTimeout(() => { _wpJustOpened = false; }, 0);
+  }
 }
 
 // close panel when clicking outside
 document.addEventListener('click', e => {
-  if (!wpPanelOpen) return;
+  if (!wpPanelOpen || _wpJustOpened) return;
   const panel = document.getElementById('wp-panel');
   const btn   = document.getElementById('btn-wallpaper');
   if (!panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
