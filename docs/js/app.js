@@ -26101,7 +26101,10 @@ document.addEventListener('keydown', ev => {
 function _crmRotuloDoPainel() {
   if (crmModeloClientes()) return _appText('app.modelClients', 'Clientes');
   if (crmModeloRH()) return _appText('rh.modelRecruitingShort', 'Recrutamento');
-  return _appText('app.clients', 'Clientes');
+  /* Modelo financeiro/padrao: o painel mostra contas a pagar/receber, nao
+     clientes especificos — "Clientes" aqui seria tao impreciso quanto era no
+     botao da barra antes de virar "Gestao". */
+  return _appText('app.management', 'Gestão');
 }
 
 function _crmSyncToolbarLabels() {
