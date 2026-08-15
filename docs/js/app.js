@@ -23543,7 +23543,7 @@ function toggleCRMView() {
     if (crmModeloClientes() && MD_CLI.entrar) MD_CLI.entrar();
   } else {
     btn.classList.remove('active');
-    label.textContent = _appText('app.clients', 'Clientes');
+    label.textContent = _appText('app.management', 'Gestão');
     board.style.display = (_activeWs || _activeGroupWs) ? 'flex' : 'block';
     if (crmView) crmView.classList.remove('visible');
     crmBrd.classList.remove('visible');
@@ -24561,7 +24561,7 @@ function _crmReloadForWorkspace() {
   // Re-aplicar classe e remount após _records carregar (feito pelo listener)
 }
 
-/* Atualiza o label do botão Clientes com contexto do workspace atual */
+/* Atualiza o label do botão Gestão com contexto do workspace atual */
 function _updateCRMViewLabel() {
   const label = document.getElementById('crm-view-label');
   if (!label) return;
@@ -24572,13 +24572,13 @@ function _updateCRMViewLabel() {
   }
   // Mostra contexto do workspace ativo
   if (typeof _activeWs !== 'undefined' && _activeWs) {
-    label.textContent = _appText('app.clients', 'Clientes');
+    label.textContent = _appText('app.management', 'Gestão');
   } else if (typeof _activeGroupWs !== 'undefined' && _activeGroupWs) {
-    label.textContent = _appText('app.clients', 'Clientes');
+    label.textContent = _appText('app.management', 'Gestão');
   } else if (typeof _activePersonalWs !== 'undefined' && _activePersonalWs && _activePersonalWs.name) {
-    label.textContent = _appText('app.clients', 'Clientes');
+    label.textContent = _appText('app.management', 'Gestão');
   } else {
-    label.textContent = _appText('app.clients', 'Clientes');
+    label.textContent = _appText('app.management', 'Gestão');
   }
 }
 

@@ -1165,6 +1165,7 @@
     'app.restore': ['Restaurar', 'Restore', 'Restaurar'],
     'app.background': ['Fundo', 'Background', 'Fondo'],
     'app.clients': ['Clientes', 'Clients', 'Clientes'],
+    'app.management': ['Gestão', 'Management', 'Gestión'],
     'app.events': ['Eventos', 'Events', 'Eventos'],
     'app.friends': ['Amigos', 'Friends', 'Amigos'],
     'app.invite': ['Convidar', 'Invite', 'Invitar'],
