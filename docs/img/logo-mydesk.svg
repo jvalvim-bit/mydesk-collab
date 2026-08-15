@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 130" width="560" height="130" role="img" aria-label="MyDesk">
+  <defs>
+    <linearGradient id="mdGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2ee0f5"/>
+      <stop offset="100%" stop-color="#1c4fd6"/>
+    </linearGradient>
+    <filter id="mdGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4.5"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#mdGlow)" opacity="0.85">
+    <path d="M35 106 L35 35 L64 72 L93 35 L93 106" fill="none" stroke="#8fe6fb" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="50" y="84" width="28" height="20" rx="8" fill="#8fe6fb"/>
+  </g>
+
+  <path d="M35 106 L35 35 L64 72 L93 35 L93 106" fill="none" stroke="#0a1628" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="49" y="83" width="30" height="22" rx="9" fill="#0a1628"/>
+
+  <path d="M35 106 L35 35 L64 72 L93 35 L93 106" fill="none" stroke="url(#mdGrad)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="52" y="86" width="24" height="16" rx="7" fill="url(#mdGrad)"/>
+
+  <text x="140" y="65" dominant-baseline="central" font-family="Poppins,'Segoe UI',system-ui,sans-serif" font-weight="800" font-size="100" fill="#8fe6fb" filter="url(#mdGlow)" opacity="0.85">MyDesk</text>
+  <text x="140" y="65" dominant-baseline="central" font-family="Poppins,'Segoe UI',system-ui,sans-serif" font-weight="800" font-size="100" fill="none" stroke="#0a1628" stroke-width="6">MyDesk</text>
+  <text x="140" y="65" dominant-baseline="central" font-family="Poppins,'Segoe UI',system-ui,sans-serif" font-weight="800" font-size="100" fill="url(#mdGrad)">MyDesk</text>
+</svg>

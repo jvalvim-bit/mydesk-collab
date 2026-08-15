@@ -13478,7 +13478,7 @@ const WP_GRADS = [
   'linear-gradient(135deg,#ffffff,#e8e8e8,#d4d4d4)',
   'linear-gradient(135deg,#f8f8f8,#e2e8f0,#f0f4f8)',
   'linear-gradient(135deg,#ffffff,#f5f0ff,#e8f4fd)',
-  'radial-gradient(900px 620px at 0% 0%,rgba(20,184,166,.14),transparent 60%),radial-gradient(900px 620px at 100% 100%,rgba(99,102,241,.16),transparent 60%),#0a0a0c',
+  'radial-gradient(1100px 760px at 0% 0%,rgba(20,184,166,.22),transparent 62%),radial-gradient(1100px 760px at 100% 100%,rgba(99,102,241,.26),transparent 62%),#0a0a0c',
 ];
 
 /* Fundo padrão do MyDesk: é o que toda conta nova encontra no primeiro acesso
