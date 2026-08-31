@@ -12,7 +12,7 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "firebase-admin": "^13.10.0",
-    "stripe": "^22.3.2"
+    "stripe": "^22.6.0"
   },
   "//overrides": [
     "uuid 9.x tem alerta de bounds check em v3/v5/v6 quando `buf` é passado, e",
